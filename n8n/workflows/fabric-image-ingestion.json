@@ -1,0 +1,180 @@
+{
+  "name": "Fabric Image Ingestion",
+  "meta": {
+    "description": "Watches a folder for new hanger/fabric photos, sends each image to the Digital Textile Library /api/ingest endpoint (which runs AI extraction, uploads to Supabase Storage, saves the fabric record, logs the extraction and recalculates similar fabrics), then notifies staff when a record lands in the review queue. See docs/N8N_SETUP.md for setup and for swapping the folder source (Google Drive / Dropbox / Local / OneDrive)."
+  },
+  "nodes": [
+    {
+      "id": "google-drive-trigger",
+      "name": "Watch Folder (Google Drive)",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "parameters": {
+        "pollTimes": {
+          "item": [{ "mode": "everyMinute" }]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": "={{ $env.WATCH_FOLDER_ID }}",
+        "event": "fileCreated",
+        "options": {}
+      },
+      "notes": "SOURCE NODE — swap this node to change the watched folder source. Alternatives: Dropbox Trigger, Local File Trigger (self-hosted n8n), or Microsoft OneDrive Trigger. Whatever the source, the next node only needs the file binary. Set WATCH_FOLDER_ID in n8n environment variables."
+    },
+    {
+      "id": "download-file",
+      "name": "Download Image",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [420, 300],
+      "parameters": {
+        "operation": "download",
+        "fileId": "={{ $json.id }}",
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "notes": "Downloads the new file as binary so it can be base64-encoded. If you swapped the trigger to Dropbox/OneDrive/Local, replace this with the matching download node (Local File Trigger already provides the binary)."
+    },
+    {
+      "id": "filter-images",
+      "name": "Only Images",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [620, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "leftValue": "={{ $binary.data.mimeType }}",
+              "rightValue": "image",
+              "operator": { "type": "string", "operation": "contains" }
+            }
+          ]
+        }
+      },
+      "notes": "Skips PDFs, spreadsheets and anything else dropped into the folder."
+    },
+    {
+      "id": "to-base64",
+      "name": "Encode Base64",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [820, 280],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const binary = await this.helpers.getBinaryDataBuffer(0, 'data');\nreturn {\n  json: {\n    file_name: $json.name ?? $binary.data.fileName ?? 'upload.jpg',\n    mime_type: $binary.data.mimeType ?? 'image/jpeg',\n    image_base64: binary.toString('base64'),\n  },\n};"
+      },
+      "notes": "Converts the binary image into base64 JSON for the ingest endpoint."
+    },
+    {
+      "id": "call-ingest",
+      "name": "POST /api/ingest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1020, 280],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TEXTILE_LIBRARY_URL }}/api/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-webhook-secret", "value": "={{ $env.N8N_WEBHOOK_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ image_base64: $json.image_base64, mime_type: $json.mime_type, file_name: $json.file_name }) }}",
+        "options": {
+          "timeout": 120000,
+          "response": { "response": { "neverError": false } }
+        }
+      },
+      "notes": "One call runs the whole pipeline server-side: AI extraction → mill resolution → Supabase Storage upload → fabric upsert → extraction log → similarity recalculation. Set TEXTILE_LIBRARY_URL (e.g. https://your-app.vercel.app) and N8N_WEBHOOK_SECRET (must match the app's env) in n8n environment variables. The endpoint responds 422 MILL_NOT_RESOLVED when the mill on the hanger can't be matched — those errors land in the failure branch."
+    },
+    {
+      "id": "needs-review",
+      "name": "Needs Review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1240, 280],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.fabric.review_status }}",
+              "rightValue": "needs_review",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "notify-review",
+      "name": "Notify Staff (Email)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1460, 180],
+      "parameters": {
+        "fromEmail": "={{ $env.NOTIFY_FROM_EMAIL }}",
+        "toEmail": "={{ $env.NOTIFY_TO_EMAIL }}",
+        "subject": "=Fabric needs review: {{ $json.fabric.fabric_code }} ({{ Math.round($json.extraction.confidence_score) }}% confidence)",
+        "text": "=A new fabric was ingested but the AI extraction confidence ({{ Math.round($json.extraction.confidence_score) }}%) is below the threshold.\n\nFabric code: {{ $json.fabric.fabric_code }}\nMill: {{ $json.extraction.mill_name }}\nMissing fields: {{ ($json.extraction.missing_fields || []).join(', ') || 'none' }}\n\nReview it here: {{ $env.TEXTILE_LIBRARY_URL }}/review"
+      },
+      "notes": "Swap for a Slack / Teams / Telegram node if preferred — the IF node output is the only contract."
+    },
+    {
+      "id": "done",
+      "name": "Approved — No Action",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1460, 380],
+      "parameters": {}
+    },
+    {
+      "id": "skip",
+      "name": "Skipped — Not an Image",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [820, 460],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Watch Folder (Google Drive)": {
+      "main": [[{ "node": "Download Image", "type": "main", "index": 0 }]]
+    },
+    "Download Image": {
+      "main": [[{ "node": "Only Images", "type": "main", "index": 0 }]]
+    },
+    "Only Images": {
+      "main": [
+        [{ "node": "Encode Base64", "type": "main", "index": 0 }],
+        [{ "node": "Skipped — Not an Image", "type": "main", "index": 0 }]
+      ]
+    },
+    "Encode Base64": {
+      "main": [[{ "node": "POST /api/ingest", "type": "main", "index": 0 }]]
+    },
+    "POST /api/ingest": {
+      "main": [[{ "node": "Needs Review?", "type": "main", "index": 0 }]]
+    },
+    "Needs Review?": {
+      "main": [
+        [{ "node": "Notify Staff (Email)", "type": "main", "index": 0 }],
+        [{ "node": "Approved — No Action", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "errorWorkflow": ""
+  },
+  "pinData": {},
+  "tags": [{ "name": "textile-library" }]
+}

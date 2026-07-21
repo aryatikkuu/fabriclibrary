@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="48" viewBox="0 0 240 48" role="img" aria-label="Digital Textile Library">
+  <rect x="1" y="1" width="46" height="46" fill="none" stroke="#191817" stroke-width="2"/>
+  <path d="M8 12h32M8 18h32M8 24h32M8 30h32M8 36h32" stroke="#191817" stroke-width="1.5"/>
+  <path d="M14 6v36M24 6v36M34 6v36" stroke="#191817" stroke-width="1.5" opacity="0.45"/>
+  <text x="58" y="30" font-family="Georgia, serif" font-size="18" fill="#191817">Digital Textile Library</text>
+</svg>

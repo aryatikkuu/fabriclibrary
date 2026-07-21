@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================================================================
+   DIGITAL TEXTILE LIBRARY — DESIGN TOKENS
+   ---------------------------------------------------------------------------
+   This block is the whole theme. Change a hex here and the entire site
+   follows — no component edits needed.
+
+   Two built-in themes:
+     · "ivory"    — warm archival cream (default)
+     · "midnight" — dark archive; set NEXT_PUBLIC_THEME=midnight in .env.local
+=========================================================================== */
+
+:root {
+  /* Canvas */
+  --c-paper:    #F3EEE2;   /* page background — warm ivory sand            */
+  --c-linen:    #EAE3D2;   /* raised surfaces, image placeholders          */
+  --c-seam:     #D8CFBA;   /* hairline rules — kept low-contrast = thin    */
+  /* Text */
+  --c-ink:      #1C1A15;   /* primary text                                 */
+  --c-graphite: #57524A;   /* secondary text                               */
+  --c-stone:    #8B8473;   /* captions, metadata                           */
+  /* Single accent — the selvedge thread (red edge-thread on a bolt) */
+  --c-thread:   #A8472F;
+  /* Status */
+  --c-approve:  #3F6B4F;
+  --c-review:   #96682C;
+  --c-reject:   #8C3B33;
+  /* Texture & rules */
+  --grain-opacity: 0.45;   /* 0 = flat digital, 1 = heavy paper            */
+  --hairline: color-mix(in srgb, var(--c-ink) 16%, transparent);
+}
+
+[data-theme='midnight'] {
+  --c-paper:    #14151A;
+  --c-linen:    #1B1D24;
+  --c-seam:     #2C2E36;
+  --c-ink:      #ECE8DC;
+  --c-graphite: #B3AEA0;
+  --c-stone:    #7C786C;
+  --c-thread:   #C75B3F;
+  --c-approve:  #6FA383;
+  --c-review:   #C29A55;
+  --c-reject:   #C26B60;
+  --grain-opacity: 0.3;
+  --hairline: color-mix(in srgb, var(--c-ink) 14%, transparent);
+}
+
+/* ===========================================================================
+   BASE
+=========================================================================== */
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-paper font-body text-ink antialiased;
+  }
+
+  /* Paper grain — a fixed, near-invisible noise field over everything. */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.05'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  ::selection {
+    background: var(--c-ink);
+    color: var(--c-paper);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--c-thread);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ===========================================================================
+   SHARED UTILITIES — defined once, used everywhere
+=========================================================================== */
+
+@layer components {
+  /* Tracked micro-mono metadata — the "garment tag" voice of the interface */
+  .t-label {
+    @apply font-mono text-[10.5px] uppercase tracking-label text-stone;
+  }
+
+  /* Ultra-thin rules (0.5px on retina via scaling) */
+  .hairline {
+    height: 1px;
+    background: var(--hairline);
+    transform: scaleY(0.75);
+  }
+  .hairline-v {
+    width: 1px;
+    background: var(--hairline);
+    transform: scaleX(0.75);
+  }
+
+  /* Selvedge thread — the one red accent, used as an edge mark */
+  .selvedge {
+    @apply border-l-2 border-thread pl-5 md:pl-7;
+  }
+
+  /* Technical button — bordered mono action, inverts on hover */
+  .btn-technical {
+    @apply inline-flex items-center gap-2 border border-ink px-5 py-2.5
+           font-mono text-[10.5px] uppercase tracking-label text-ink
+           transition-colors hover:bg-ink hover:text-paper;
+  }
+  .btn-technical--thread {
+    @apply border-thread text-thread hover:bg-thread hover:text-paper;
+  }
+
+  /* Stitch border — dashed like a seam, for empty states */
+  .stitch {
+    border: 1px dashed color-mix(in srgb, var(--c-ink) 30%, transparent);
+  }
+
+  /* Display type — aggressive editorial scale, tight kerning */
+  .display-hero {
+    @apply font-display leading-[0.98] tracking-display text-ink;
+    font-size: clamp(3.25rem, 8.5vw, 7.5rem);
+  }
+  .display-page {
+    @apply font-display leading-[1.0] tracking-display text-ink;
+    font-size: clamp(2.75rem, 6vw, 5.25rem);
+  }
+}
