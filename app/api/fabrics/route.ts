@@ -4,6 +4,8 @@ import { buildServices } from '@/lib/container';
 import { handleApiError, requirePermission, requireRateLimit } from '@/lib/api-helpers';
 import { fabricSearchSchema, fabricCreateSchema } from '@/features/fabrics/types/fabric.schema';
 
+export const dynamic = 'force-dynamic';
+
 /** GET /api/fabrics — list and search fabrics. */
 export async function GET(request: NextRequest) {
   try {

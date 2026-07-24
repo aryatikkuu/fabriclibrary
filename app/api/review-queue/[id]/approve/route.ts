@@ -4,6 +4,8 @@ import { buildServices } from '@/lib/container';
 import { handleApiError, requirePermission } from '@/lib/api-helpers';
 import { fabricUpdateSchema } from '@/features/fabrics/types/fabric.schema';
 
+export const dynamic = 'force-dynamic';
+
 /** PATCH /api/review-queue/:id/approve — approve a record, with optional corrections. */
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {

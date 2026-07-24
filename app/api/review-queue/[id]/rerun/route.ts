@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
 import { handleApiError, requirePermission } from '@/lib/api-helpers';
 
+export const dynamic = 'force-dynamic';
+
 /** POST /api/review-queue/:id/rerun — re-run AI extraction on the fabric image. */
 export async function POST(_request: NextRequest, { params }: { params: { id: string } }) {
   try {

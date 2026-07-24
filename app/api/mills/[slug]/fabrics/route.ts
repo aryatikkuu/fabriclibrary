@@ -4,6 +4,8 @@ import { buildServices } from '@/lib/container';
 import { handleApiError } from '@/lib/api-helpers';
 import { fabricSearchSchema } from '@/features/fabrics/types/fabric.schema';
 
+export const dynamic = 'force-dynamic';
+
 /** GET /api/mills/:slug/fabrics — fabrics belonging to one mill. */
 export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
   try {

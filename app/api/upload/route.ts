@@ -4,6 +4,8 @@ import { buildServices } from '@/lib/container';
 import { handleApiError, requirePermission } from '@/lib/api-helpers';
 import { ValidationError } from '@/lib/errors';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/upload — multipart upload of a fabric image (admin/editor).
  * Fields: file, mill_slug, fabric_code.

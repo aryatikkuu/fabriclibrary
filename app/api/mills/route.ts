@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
 import { handleApiError } from '@/lib/api-helpers';
 
+export const dynamic = 'force-dynamic';
+
 /** GET /api/mills — active mills with fabric counts. */
 export async function GET() {
   try {

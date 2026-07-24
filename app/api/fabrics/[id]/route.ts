@@ -4,6 +4,8 @@ import { buildServices } from '@/lib/container';
 import { handleApiError, requirePermission } from '@/lib/api-helpers';
 import { fabricUpdateSchema } from '@/features/fabrics/types/fabric.schema';
 
+export const dynamic = 'force-dynamic';
+
 type Context = { params: { id: string } };
 
 /** GET /api/fabrics/:id — fabric details. */

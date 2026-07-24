@@ -7,6 +7,8 @@ import { openAiChatJson } from '@/lib/openai';
 import { SEARCH_ASSISTANT_SYSTEM_PROMPT } from '@/features/ai-extraction/prompts/search-assistant.prompt';
 import { millsConfig } from '@/lib/config/mills.config';
 
+export const dynamic = 'force-dynamic';
+
 const assistantRequestSchema = z.object({ question: z.string().min(2).max(500) });
 
 const assistantFiltersSchema = z.object({

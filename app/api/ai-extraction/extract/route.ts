@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { handleApiError, requirePermission, verifyWebhookSecret } from '@/lib/api-helpers';
 import { AIExtractionService } from '@/features/ai-extraction/extraction.service';
 
+export const dynamic = 'force-dynamic';
+
 const extractRequestSchema = z
   .object({
     image_url: z.string().url().optional(),

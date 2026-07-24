@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
 import { handleApiError, requirePermission } from '@/lib/api-helpers';
 
+export const dynamic = 'force-dynamic';
+
 /** GET /api/review-queue — fabrics awaiting human review (admin/editor). */
 export async function GET(request: NextRequest) {
   try {

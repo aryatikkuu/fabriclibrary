@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
 import { handleApiError } from '@/lib/api-helpers';
 
+export const dynamic = 'force-dynamic';
+
 /** GET /api/fabrics/:id/similar — top similar fabrics. */
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   try {
