@@ -7,6 +7,8 @@ Migrations live in `database/migrations/` and are plain SQL — paste into the S
 | `0001_initial_schema.sql` | All tables, triggers, indexes, full-text search vector |
 | `0002_row_level_security.sql` | RLS policies for every table |
 | `0003_storage_bucket.sql` | `textile-library` bucket + storage policies |
+| `0004_fabric_library_number.sql` | Adds `library_no` — a human-friendly sequential catalog number |
+| `0005_use_replaces_finish_qr.sql` | Drops unused `finish`/`qr_code_value`; adds `suggested_use`; rebuilds `search_vector` |
 
 ## Entity relationships
 
@@ -39,24 +41,26 @@ Migrations live in `database/migrations/` and are plain SQL — paste into the S
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid PK | |
+| library_no | bigint **generated identity** | sequential, human-friendly catalog number (1, 2, 3…) |
 | mill_id | uuid FK → mills | `on delete cascade` |
 | fabric_code | text | **unique per mill** (`unique(mill_id, fabric_code)`) |
 | fabric_name | text | |
-| fabric_type | text | e.g. Single Jersey, Satin Weave |
+| fabric_type | text | e.g. Single Jersey, Satin Weave, Jacquard |
 | composition | text | e.g. "97% Polyester 3% Spandex" |
 | gsm | integer | CHECK 0 < gsm ≤ 2000 |
 | width | text | kept as text — "58 inch", "150 cm", "72 inch tubular" |
 | color / color_family | text | family is the filterable bucket |
-| finish | text | |
-| season | text | AW / SS / Core |
-| description | text | human-written |
+| season | text | AW / SS / Core — inferred from gsm+composition+type, never printed on labels |
+| suggested_use | text | one-sentence inferred end-use, e.g. "suited to occasion dresses, eveningwear…" |
+| description | text | human-written / import notes (e.g. "3-up range card", anomalies) |
 | ai_description | text | model-written note, labelled in the UI |
-| qr_code_value | text | decoded QR/data-matrix payload |
 | extraction_confidence | numeric | 0–100 |
 | review_status | text | `approved` \| `needs_review` \| `rejected` (CHECK) |
-| search_vector | tsvector **generated** | code+name+type+composition+color+finish; GIN-indexed |
+| search_vector | tsvector **generated** | code+name+type+composition+color+suggested_use+description; GIN-indexed |
 | created_by | uuid FK → profiles | nullable (automation) |
 | created_at / updated_at | timestamptz | |
+
+`finish` and `qr_code_value` existed in the original schema but were dropped (0005) — unused in practice; QR payloads were never reliably decodable from photos, and finish overlapped with fabric_type/description. End-use search now goes through `suggested_use` + `fabric_tags` instead.
 
 ### fabric_images
 `id, fabric_id FK, storage_path, public_url, image_type (hanger|fabric|qr|detail|other), is_primary, uploaded_at`. First image of a fabric is marked primary by the ingest pipeline.
@@ -65,7 +69,7 @@ Migrations live in `database/migrations/` and are plain SQL — paste into the S
 `id, fabric_id FK, document_name, document_type (datasheet|certificate|testing_report|other), storage_path, public_url, uploaded_at`.
 
 ### fabric_tags
-`id, fabric_id FK, tag, created_at` — free-form labels, unique per (fabric, tag).
+`id, fabric_id FK, tag, created_at` — free-form labels, unique per (fabric, tag). Populated by the bulk import pipeline as short lowercase end-use keywords (e.g. `dresses`, `eveningwear`, `shirting`) alongside `suggested_use`; also open for manual tagging.
 
 ### fabric_similarities
 `id, source_fabric_id FK, similar_fabric_id FK, similarity_score numeric (0–100), similarity_reason text, similarity_method (rule_based|embedding|visual), created_at`. Unique on (source, similar, method). Replaced wholesale on each recalculation.
