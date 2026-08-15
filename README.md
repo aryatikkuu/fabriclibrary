@@ -1,16 +1,14 @@
 # Digital Textile Library
 
-A premium digital archive for mill fabrics. Staff drop hanger/fabric photos into a watched folder; an n8n workflow sends each image to the platform, where OpenAI Vision reads the hanger label (fabric code, composition, GSM, width, colour, finish, QR code), the image is stored in Supabase Storage, the structured record is saved to Supabase Postgres, and the fabric appears on a searchable, editorial-style website — automatically. Low-confidence extractions are routed to a human Review Queue instead of being published.
+A premium digital archive for mill fabrics. Hanger/fabric photos are read (fabric code, composition, GSM, width, colour, suggested use) — currently via a local Claude agent run reading a batch of photos into structured JSON, with an n8n + OpenAI Vision workflow retained in `n8n/workflows/` as an alternative path — then loaded through `scripts/bulk-insert.mjs`, which uploads the image to Supabase Storage and saves the record to Supabase Postgres. Every extraction lands in the Review Queue. Nothing publishes without a human confirming it, regardless of confidence score.
 
 ```
-photo in folder ──► n8n ──► POST /api/ingest ──► OpenAI Vision extraction
+photo folder ──► local Claude agent run (or OpenAI Vision) ──► JSON batch
+           ──► scripts/bulk-insert.mjs ──► needs_review ──► human review ──► public catalog
                                                    │
                               Supabase Storage ◄───┤ image upload
                               Supabase Postgres ◄──┤ validated record + extraction log
                               Similarity engine ◄──┘ top-6 similar fabrics
-                                                   │
-                     confidence ≥ threshold ──► published on the site
-                     confidence < threshold ──► Review Queue (approve / fix / re-run / reject)
 ```
 
 ## Stack
@@ -19,11 +17,11 @@ photo in folder ──► n8n ──► POST /api/ingest ──► OpenAI Vision
 |---|---|
 | Web app | Next.js 14 (App Router) · TypeScript · Tailwind CSS |
 | Database / Auth / Storage | Supabase (Postgres, RLS, email auth, Storage) |
-| Automation | n8n (importable workflow in `n8n/workflows/`) |
+| Automation | Local agent run. n8n workflow retained in `n8n/workflows/` as an alternative path, not the current default. |
 | AI | OpenAI Vision (`gpt-5.4-nano`, cheapest) for label extraction + search assistant |
 | Validation | Zod — AI output never touches the database unvalidated |
 | Tests | Vitest |
-| Hosting | Vercel (app) + Supabase cloud + n8n cloud/self-hosted |
+| Hosting | Vercel (app) + Supabase cloud |
 
 ## Quick start
 
@@ -37,7 +35,7 @@ cp .env.example .env.local
 # 3. Set up Supabase (run the 3 migrations + storage bucket)
 #    See docs/SUPABASE_SETUP.md — paste database/migrations/*.sql into the SQL editor
 
-# 4. Seed mills + sample fabrics
+# 4. Seed mills (fabrics are imported separately — see scripts/bulk-insert.mjs)
 npm run db:seed
 
 # 5. Run
@@ -58,10 +56,11 @@ services/             Business logic (fabric, mill, storage, similarity, review,
 repositories/         All Supabase queries — nothing else talks to the DB
 lib/                  Config (all tunables), Supabase clients, DI container, errors, OpenAI client
 database/             SQL migrations + seed
-n8n/workflows/        Importable ingestion workflow
+n8n/workflows/        Ingestion workflow (alternative to the local agent pipeline)
 docs/                 Full documentation set (see below)
 tests/unit/           Vitest suites for the pure logic
-scripts/seed.mjs      Idempotent seeding script
+scripts/bulk-insert.mjs  Batch import — the current default pipeline
+scripts/seed.mjs      Idempotent mill-seeding script
 ```
 
 ## Documentation
