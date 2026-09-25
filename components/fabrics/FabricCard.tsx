@@ -38,6 +38,11 @@ export function FabricCard({
             <span className="t-label">No image yet</span>
           </div>
         )}
+        {fabric.match != null && (
+          <span className="absolute right-3 top-3 bg-paper-veil px-2 py-0.5 font-mono text-[10.5px] text-ink backdrop-blur">
+            {fabric.match}% match
+          </span>
+        )}
         {showStatus && (
           <div className="absolute left-3 top-3 bg-paper-veil backdrop-blur">
             <StatusBadge status={fabric.review_status} />

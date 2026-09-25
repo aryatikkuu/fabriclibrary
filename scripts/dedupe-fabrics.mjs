@@ -32,7 +32,7 @@
  */
 
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { adminClient, selectAll } from './lib/common.mjs';
+import { adminClient, editDistance, selectAll } from './lib/common.mjs';
 
 const apply = process.argv.includes('--apply');
 const db = adminClient();
@@ -44,15 +44,6 @@ const normCode = (c) => String(c ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const gsmCompatible = (a, b) => a.gsm == null || b.gsm == null || a.gsm === b.gsm;
 const specificCode = (code) => code.length >= 5 && !/^(AW|SS|FW)\d+$/.test(code);
 const isBlank = (v) => v === null || v === undefined || String(v).trim() === '';
-
-function editDistance(a, b) {
-  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
-  for (let j = 1; j <= b.length; j++) dp[0][j] = j;
-  for (let i = 1; i <= a.length; i++)
-    for (let j = 1; j <= b.length; j++)
-      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-  return dp[a.length][b.length];
-}
 
 /** storage_path -> photo identity: "<mill>/<filename>" (mills/<slug>/fabrics/<code>/images/<file>). */
 function photoIdentity(storagePath) {

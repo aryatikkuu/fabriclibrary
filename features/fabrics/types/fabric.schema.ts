@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { parseLook } from '@/features/look-search/look-tags';
 
 /** Validation for creating/updating fabric records via the API. */
 export const fabricCreateSchema = z.object({
@@ -31,6 +32,7 @@ export const fabricSearchSchema = z.object({
   gsmMax: z.coerce.number().int().max(5000).optional(),
   reviewStatus: z.enum(['approved', 'needs_review', 'rejected']).optional(),
   sort: z.enum(['newest', 'gsm_asc', 'gsm_desc', 'code']).optional(),
+  look: z.string().max(1000).optional().transform((v) => (v ? parseLook(v) : undefined)),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(24),
 });

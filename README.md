@@ -72,12 +72,16 @@ of keeping copies. Needs Node 22.6+.
 |---|---|
 | `npm run extract -- <mill-slug> "<photo folder>" [concurrency]` | Read hanger photos with OpenAI Vision and import them (resumable via `.extraction-progress-<mill>.json`) |
 | `npm run bulk-insert -- <batch.json>` | Import an already-extracted JSON batch (used by `extract`) |
+| `npm run verify-tag -- [--budget 1]` | Re-read every label blind and tag what each fabric looks like (paid; resumable; report in `reports/`) |
+| `npm run verify-tag -- --save [--fix-codes] [--apply]` | Store the tags, descriptions and label checks; `--fix-codes` fixes near-miss codes and sends big disagreements to review |
 | `npm run dedupe [-- --apply]` | Merge duplicate fabric records (dry run unless `--apply`; writes the plan to `backups/`) |
 | `npm run backup [-- --with-files]` | Snapshot every table (+ pipeline state files) to `backups/<date>/`. Copy it off this machine. |
 | `npm run restore -- backups/<date> [--confirm]` | Load a snapshot back (dry run unless `--confirm`) |
 | `npm run db:seed` | Create the mills (idempotent) |
 
 `backups/` is git-ignored — it contains user profiles and audit logs.
+
+**Photo search** (Search tab, signed-in users): a photo and/or a note ("for summer shirts") is turned into the same tags by one AI call (`app/api/search/look`, ~0.1¢), and the database ranks the library against them (`match_fabrics_by_look`, migration 0006). Tag lists and ranking weights live in `lib/config/visual-tags.config.ts`.
 
 ## Documentation
 

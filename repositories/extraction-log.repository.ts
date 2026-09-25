@@ -27,4 +27,19 @@ export class ExtractionLogRepository {
     if (error) throw error;
     return data ?? [];
   }
+
+  /**
+   * Codes the label re-read (scripts/verify-and-tag.mjs) suggests instead of the
+   * stored one, for the review queue: fabric id -> suggested code.
+   */
+  async findCodeSuggestions(fabricIds: string[]): Promise<Record<string, string>> {
+    if (fabricIds.length === 0) return {};
+    const { data, error } = await this.db
+      .from('ai_extraction_logs')
+      .select('fabric_id, suggestion:extracted_json->>code_suggestion')
+      .in('fabric_id', fabricIds)
+      .not('extracted_json->>code_suggestion', 'is', null);
+    if (error) throw error;
+    return Object.fromEntries(((data ?? []) as { fabric_id: string; suggestion: string }[]).map((r) => [r.fabric_id, r.suggestion]));
+  }
 }

@@ -8,6 +8,7 @@ import { EditorialLayout } from '@/components/layout/EditorialLayout';
 import { PremiumPageHeader } from '@/components/ui/PremiumPageHeader';
 import { FabricSearchBar } from '@/components/search/FabricSearchBar';
 import { FabricFilters } from '@/components/search/FabricFilters';
+import { LookChips } from '@/components/search/LookChips';
 import { FabricGrid } from '@/components/fabrics/FabricGrid';
 import { Pagination } from '@/components/ui/Pagination';
 
@@ -38,12 +39,13 @@ export default async function SearchPage({
       <PremiumPageHeader
         eyebrow="Find a quality"
         title="Search the archive"
-        description="By fabric code, name, fibre, weight, colour, use or mill."
+        description={`By fabric code, name, fibre, weight, colour, use or mill${profile ? ' — or by photo' : ''}.`}
       />
 
       <div className="mt-10 max-w-2xl">
         <Suspense>
-          <FabricSearchBar />
+          <FabricSearchBar photoSearch={!!profile} />
+          <LookChips />
         </Suspense>
       </div>
 
@@ -56,7 +58,7 @@ export default async function SearchPage({
       <div className="mt-12 flex items-baseline justify-between border-b border-seam pb-3">
         <span className="font-mono text-[11px] uppercase tracking-label text-stone">
           {fabrics.total} {fabrics.total === 1 ? 'result' : 'results'}
-          {parsed.q ? ` for “${parsed.q}”` : ''}
+          {parsed.look?.length ? ', closest match first' : parsed.q ? ` for “${parsed.q}”` : ''}
         </span>
       </div>
 
@@ -64,7 +66,9 @@ export default async function SearchPage({
         <FabricGrid
           fabrics={fabrics.items}
           showStatus={isStaff}
-          emptyHint="Try a broader term — search covers codes, names, compositions and colours."
+          emptyHint={parsed.look?.length
+            ? 'Nothing close enough — remove a tag above or loosen the filters.'
+            : 'Try a broader term — search covers codes, names, compositions and colours.'}
         />
       </div>
 

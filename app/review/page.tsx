@@ -18,6 +18,9 @@ export default async function ReviewPage() {
 
   const services = buildServices(await createClient());
   const queue = await services.reviewService.getQueue();
+  const codeSuggestions = await services.repositories.extractionLogRepository.findCodeSuggestions(
+    queue.items.map((f) => f.id),
+  );
 
   return (
     <EditorialLayout>
@@ -32,7 +35,7 @@ export default async function ReviewPage() {
         }
       />
       <div className="mt-10">
-        <ReviewQueueTable initialItems={queue.items} />
+        <ReviewQueueTable initialItems={queue.items} codeSuggestions={codeSuggestions} />
       </div>
     </EditorialLayout>
   );

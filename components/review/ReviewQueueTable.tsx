@@ -22,7 +22,14 @@ const EDITABLE_FIELDS = [
 
 type EditableField = (typeof EDITABLE_FIELDS)[number][0];
 
-function ReviewRow({ fabric, onResolved }: { fabric: FabricWithRelations; onResolved: (id: string) => void }) {
+function ReviewRow({
+  fabric, codeSuggestion, onResolved,
+}: {
+  fabric: FabricWithRelations;
+  /** The code a fresh AI re-read of the label found, when it disagrees with the stored one. */
+  codeSuggestion?: string;
+  onResolved: (id: string) => void;
+}) {
   const [edits, setEdits] = useState<Partial<Record<EditableField, string>>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -75,10 +82,22 @@ function ReviewRow({ fabric, onResolved }: { fabric: FabricWithRelations; onReso
             <label key={field} className="flex flex-col gap-1">
               <span className="font-mono text-[10px] uppercase tracking-label text-stone">{label}</span>
               <input
-                defaultValue={(fabric[field] as string | number | null) ?? ''}
+                value={edits[field] ?? (fabric[field] as string | number | null) ?? ''}
                 onChange={(e) => setEdits((prev) => ({ ...prev, [field]: e.target.value }))}
                 className="tap-target border border-seam bg-paper px-2 py-1.5 text-sm text-ink focus:border-ink focus:outline-none"
               />
+              {field === 'fabric_code' && codeSuggestion && edits.fabric_code !== codeSuggestion && (
+                <span className="text-xs text-review">
+                  Label reads <span className="font-mono">{codeSuggestion}</span>{' '}
+                  <button
+                    type="button"
+                    onClick={() => setEdits((prev) => ({ ...prev, fabric_code: codeSuggestion }))}
+                    className="underline underline-offset-2 hover:text-ink"
+                  >
+                    use this
+                  </button>
+                </span>
+              )}
             </label>
           ))}
         </div>
@@ -113,7 +132,12 @@ function ReviewRow({ fabric, onResolved }: { fabric: FabricWithRelations; onReso
   );
 }
 
-export function ReviewQueueTable({ initialItems }: { initialItems: FabricWithRelations[] }) {
+export function ReviewQueueTable({
+  initialItems, codeSuggestions = {},
+}: {
+  initialItems: FabricWithRelations[];
+  codeSuggestions?: Record<string, string>;
+}) {
   const [items, setItems] = useState(initialItems);
 
   if (items.length === 0) {
@@ -126,6 +150,7 @@ export function ReviewQueueTable({ initialItems }: { initialItems: FabricWithRel
         <ReviewRow
           key={fabric.id}
           fabric={fabric}
+          codeSuggestion={codeSuggestions[fabric.id]}
           onResolved={(id) => setItems((prev) => prev.filter((f) => f.id !== id))}
         />
       ))}

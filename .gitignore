@@ -16,3 +16,6 @@ backups/
 
 # pipeline state (paid AI output) — kept in backups/, not in git
 .extraction-progress-*.json
+
+# verify-and-tag reports (fabric data + AI readings)
+reports/

@@ -31,7 +31,7 @@ export async function openAiChatJson(options: {
     },
     body: JSON.stringify({
       model: options.model ?? 'gpt-5.4-nano',
-      max_tokens: options.maxTokens ?? 1200,
+      max_completion_tokens: options.maxTokens ?? 1200,
       temperature: 0,
       response_format: { type: 'json_object' },
       messages: options.messages,

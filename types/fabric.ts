@@ -67,6 +67,8 @@ export interface FabricWithRelations extends Fabric {
   mill: Pick<Mill, 'id' | 'name' | 'slug'> | null;
   images: FabricImage[];
   tags?: FabricTag[];
+  /** Photo search only: how closely the fabric matches the searched tags, 0–100. */
+  match?: number;
 }
 
 export interface FabricSearchParams {
@@ -79,6 +81,8 @@ export interface FabricSearchParams {
   gsmMax?: number;
   reviewStatus?: ReviewStatus;
   sort?: 'newest' | 'gsm_asc' | 'gsm_desc' | 'code';
+  /** Photo search tags ("pattern:floral", "use:shirts"); when set, results are ranked by look and q/sort are ignored. */
+  look?: string[];
   page?: number;
   pageSize?: number;
 }
