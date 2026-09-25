@@ -52,7 +52,7 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
                       src={image.public_url}
                       alt={`${fabric.fabric_code} — ${image.image_type}`}
                       fill
-                      sizes="15vw"
+                      sizes="(max-width: 768px) 22vw, 15vw"
                       className="object-cover"
                     />
                   )}

@@ -31,6 +31,8 @@
   /* Texture & rules */
   --grain-opacity: 0.45;   /* 0 = flat digital, 1 = heavy paper            */
   --hairline: color-mix(in srgb, var(--c-ink) 16%, transparent);
+  /* Masthead height — shared by the header and the mobile drawer offset */
+  --header-h: 4.5rem;
 }
 
 [data-theme='midnight'] {
@@ -98,6 +100,26 @@
   /* Tracked micro-mono metadata — the "garment tag" voice of the interface */
   .t-label {
     @apply font-mono text-[10.5px] uppercase tracking-label text-stone;
+  }
+
+  /* Comfortable touch target (>=44px) on pointer-coarse devices only, so the
+     desktop masthead and toolbars keep their compact editorial rhythm. */
+  .tap-target {
+    min-height: 44px;
+  }
+
+  /* Translucent paper for sticky/overlay surfaces.
+     Tailwind's `/opacity` modifiers cannot add alpha to a hex held in a CSS
+     variable (`bg-paper/95` silently resolves to transparent), so the blend is
+     declared once here and shared by the masthead and the mobile drawer.
+     Follows both themes automatically via --c-paper. */
+  .bg-paper-veil {
+    background-color: color-mix(in srgb, var(--c-paper) 95%, transparent);
+  }
+  @media (pointer: fine) {
+    .tap-target {
+      min-height: 0;
+    }
   }
 
   /* Ultra-thin rules (0.5px on retina via scaling) */

@@ -39,14 +39,14 @@ export function FabricCard({
           </div>
         )}
         {showStatus && (
-          <div className="absolute left-3 top-3 bg-paper/90 backdrop-blur">
+          <div className="absolute left-3 top-3 bg-paper-veil backdrop-blur">
             <StatusBadge status={fabric.review_status} />
           </div>
         )}
       </div>
 
       <div className="border-b border-seam pb-4 pt-4">
-        <div className="flex items-baseline justify-between gap-3">
+        <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
           <span className="t-label">{fabric.fabric_code}</span>
           <span className="font-mono text-[10.5px] text-stone">{formatGsm(fabric.gsm)}</span>
         </div>
