@@ -72,7 +72,6 @@ of keeping copies. Needs Node 22.6+.
 |---|---|
 | `npm run extract -- <mill-slug> "<photo folder>" [concurrency]` | Read hanger photos with OpenAI Vision and import them (resumable via `.extraction-progress-<mill>.json`) |
 | `npm run bulk-insert -- <batch.json>` | Import an already-extracted JSON batch (used by `extract`) |
-| `npm run crop-detect -- pass1 \| pass2 \| status` | Find the fabric in every photo for clean crops; spend-capped by `CROP_BUDGET_USD` (default $20), results in `.crop-boxes.json` |
 | `npm run dedupe [-- --apply]` | Merge duplicate fabric records (dry run unless `--apply`; writes the plan to `backups/`) |
 | `npm run backup [-- --with-files]` | Snapshot every table (+ pipeline state files) to `backups/<date>/`. Copy it off this machine. |
 | `npm run restore -- backups/<date> [--confirm]` | Load a snapshot back (dry run unless `--confirm`) |

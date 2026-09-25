@@ -97,3 +97,25 @@ export async function mapPool(items, limit, fn) {
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
   return results;
 }
+
+/** Every object in a storage bucket as { path, size }. list() is per-folder, so walk the tree, folders in parallel. */
+export async function listStorage(db, bucket, prefix = '') {
+  const PAGE = 1000;
+  const files = [];
+  const folders = [];
+  for (let offset = 0; ; offset += PAGE) {
+    const { data, error } = await db.storage.from(bucket).list(prefix, { limit: PAGE, offset });
+    if (error) throw new Error(`storage ${prefix}: ${error.message}`);
+    for (const item of data) {
+      const path = prefix ? `${prefix}/${item.name}` : item.name;
+      if (item.id === null) folders.push(path); // folders have no id
+      else files.push({ path, size: item.metadata?.size ?? null });
+    }
+    if (data.length < PAGE) break;
+  }
+  for (const sub of await mapPool(folders, 8, (f) => listStorage(db, bucket, f))) {
+    if (sub.error) throw new Error(sub.error);
+    files.push(...sub);
+  }
+  return files;
+}

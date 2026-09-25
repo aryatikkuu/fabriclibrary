@@ -16,7 +16,7 @@
  *     Profiles whose auth user is missing are skipped, and references to them
  *     (fabrics.created_by, audit_logs.user_id) are set to null.
  *   - With a --with-files backup, storage objects are re-uploaded too; otherwise
- *     re-upload photos with bulk-insert.mjs / rebuild crops from state/.crop-boxes-*.
+ *     re-upload photos with bulk-insert.mjs from the original photo folders.
  */
 
 import { readFileSync, existsSync } from 'node:fs';

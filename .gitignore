@@ -13,9 +13,6 @@ coverage/
 # local data snapshots (scripts/backup.mjs) — contain profiles/audit logs
 backups/
 
-# crop-detect run log
-crop-pass1.log
 
 # pipeline state (paid AI output) — kept in backups/, not in git
-.crop-boxes.json
 .extraction-progress-*.json

@@ -9,7 +9,7 @@
  * Duplicates it merges (per mill):
  *   same-code   codes identical once case/punctuation/spaces are ignored
  *               ("SLCAF605AA" / "SLCaf605AA", "COL-102, BLACK" / "COL-102-BLACK")
- *   same-photo  byte-identical photos imported twice whose codes differ by a
+ *   same-photo  the same photo imported twice whose codes differ by a
  *               single OCR slip (edit distance 1, e.g. "2022022-35" / "202022-35")
  * Both require the GSM not to conflict and a specific code: at least 5
  * characters and not a season label, so page/range markers like "PD#4" or
@@ -17,7 +17,7 @@
  * differences ("JQ-250163" / "JQ-260153", "-01" / "-07") are left for review —
  * they are as likely to be separate colourways as misreads.
  * Photos carrying genuinely different codes are left alone — those are
- * multi-fabric photos, handled by the crop pass (scripts/crop-detect.mjs).
+ * multi-fabric photos (one photo, several labels).
  *
  * In each group the keeper is: approved > needs_review > rejected, then the most
  * complete record, then the highest extraction confidence. Its empty fields are
@@ -28,14 +28,11 @@
  * Blank-code "bucket" records (see bulk-insert.mjs) lose any photo that a real
  * record also has.
  *
- * Photo identity comes from .crop-boxes.json (md5 per source file); without it,
- * only exact filename matches count as the same photo.
+ * "Same photo" means the same filename within a mill.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import { adminClient, selectAll } from './lib/common.mjs';
-import { sanitize } from '../lib/config/storage.config.ts';
 
 const apply = process.argv.includes('--apply');
 const db = adminClient();
@@ -57,20 +54,10 @@ function editDistance(a, b) {
   return dp[a.length][b.length];
 }
 
-/** storage_path -> photo identity (md5 when known, else "<mill>/<filename>"). */
-function photoIdentity() {
-  const byFile = new Map();
-  const statePath = resolve(process.cwd(), '.crop-boxes.json');
-  if (existsSync(statePath)) {
-    for (const [key, p] of Object.entries(JSON.parse(readFileSync(statePath, 'utf8')).photos)) {
-      byFile.set(`${p.mill}/${sanitize(key.slice(key.indexOf('/') + 1))}`, p.hash);
-    }
-  }
-  return (storagePath) => {
-    const parts = storagePath.split('/'); // mills/<slug>/fabrics/<code>/images/<file>
-    const fileKey = `${parts[1]}/${parts[parts.length - 1]}`;
-    return byFile.get(fileKey) ?? fileKey;
-  };
+/** storage_path -> photo identity: "<mill>/<filename>" (mills/<slug>/fabrics/<code>/images/<file>). */
+function photoIdentity(storagePath) {
+  const parts = storagePath.split('/');
+  return `${parts[1]}/${parts[parts.length - 1]}`;
 }
 
 function keeperOf(group) {
@@ -91,7 +78,7 @@ async function main() {
     selectAll(db, 'fabric_tags', 'id, fabric_id, tag'),
   ]);
   const byId = new Map(fabrics.map((f) => [f.id, f]));
-  const identity = photoIdentity();
+  const identity = photoIdentity;
 
   // ---- union-find over duplicate evidence ----
   const parent = new Map(fabrics.map((f) => [f.id, f.id]));

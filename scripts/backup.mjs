@@ -7,45 +7,24 @@
  * Writes backups/<YYYY-MM-DD_HHMM>/:
  *   <table>.json          every row of each public table (paginated past the 1,000-row cap)
  *   storage-index.json    every object path in the storage bucket
- *   state/                the resumable pipeline files (.extraction-progress-*, .crop-boxes-*),
+ *   state/                the resumable pipeline files (.extraction-progress-*),
  *                         which record paid-for AI output and are cheap to keep
  *   files/                (only with --with-files) a copy of every storage object
  *   manifest.json         row/file counts, so a restore can be sanity-checked
  *
  * Storage objects are skipped by default: fabric photos can be re-uploaded from
- * the originals and crops rebuilt from the crop-box files. Copy the whole folder
- * somewhere off this machine (e.g. Google Drive). backups/ is git-ignored because
- * it contains user profiles and audit logs. Restore with scripts/restore.mjs.
+ * the originals. Copy the whole folder somewhere off this machine (e.g. Google
+ * Drive). backups/ is git-ignored because it contains user profiles and audit
+ * logs. Restore with scripts/restore.mjs.
  */
 
 import { mkdirSync, writeFileSync, readdirSync, copyFileSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
-import { adminClient, mapPool, selectAll, STORAGE_BUCKET, TABLES } from './lib/common.mjs';
+import { adminClient, listStorage, mapPool, selectAll, STORAGE_BUCKET, TABLES } from './lib/common.mjs';
 
-const PAGE = 1000;
 const withFiles = process.argv.includes('--with-files');
 const db = adminClient();
 const bucket = STORAGE_BUCKET();
-
-/** Storage list() is per-folder, so walk the tree — folders in parallel. */
-async function listObjects(prefix = '') {
-  const files = [];
-  const folders = [];
-  for (let offset = 0; ; offset += PAGE) {
-    const { data, error } = await db.storage.from(bucket).list(prefix, { limit: PAGE, offset });
-    if (error) throw new Error(`storage ${prefix}: ${error.message}`);
-    for (const item of data) {
-      const path = prefix ? `${prefix}/${item.name}` : item.name;
-      (item.id === null ? folders : files).push(path); // folders have no id
-    }
-    if (data.length < PAGE) break;
-  }
-  for (const sub of await mapPool(folders, 8, listObjects)) {
-    if (sub.error) throw new Error(sub.error);
-    files.push(...sub);
-  }
-  return files;
-}
 
 async function downloadAll(paths, dir) {
   let done = 0;
@@ -77,13 +56,13 @@ async function main() {
     console.log(`${table}: ${rows.length}`);
   }
 
-  const paths = await listObjects();
+  const paths = (await listStorage(db, bucket)).map((f) => f.path);
   writeFileSync(join(dir, 'storage-index.json'), JSON.stringify(paths));
   manifest.storage_objects = paths.length;
   console.log(`storage objects: ${paths.length}`);
 
   for (const f of readdirSync(process.cwd())) {
-    if (/^\.(extraction-progress|crop-boxes)-.+\.json$/.test(f)) {
+    if (/^\.extraction-progress-.+\.json$/.test(f)) {
       copyFileSync(f, join(dir, 'state', f));
       manifest.state_files.push(f);
     }
