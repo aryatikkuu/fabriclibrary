@@ -29,7 +29,7 @@ export function FabricTechnicalData({ fabric }: { fabric: FabricWithRelations })
     <div>
       <div className="flex items-baseline justify-between border-b-2 border-ink pb-2">
         <span className="t-label text-ink">[ Spec sheet ]</span>
-        <span className="font-mono text-[10.5px] text-stone">{fabric.fabric_code}</span>
+        <span className="font-mono text-[10.5px] text-stone">{fabric.fabric_code ?? "No code"}</span>
       </div>
       <dl>
         {rows.map(([label, value], i) => (

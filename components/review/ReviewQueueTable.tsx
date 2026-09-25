@@ -65,7 +65,7 @@ function ReviewRow({
       <div>
         <div className="relative aspect-[4/5] overflow-hidden bg-linen">
           {image?.public_url && (
-            <Image src={image.public_url} alt={fabric.fabric_code} fill sizes="(max-width: 768px) 90vw, 200px" className="object-cover" />
+            <Image src={image.public_url} alt={fabric.fabric_code ?? "Fabric"} fill sizes="(max-width: 768px) 90vw, 200px" className="object-cover" />
           )}
         </div>
         <div className="mt-3 flex items-center justify-between">

@@ -6,7 +6,7 @@ export type SimilarityMethod = 'rule_based' | 'embedding' | 'visual';
 export interface Fabric {
   id: string;
   mill_id: string;
-  fabric_code: string;
+  fabric_code: string | null;
   fabric_name: string | null;
   fabric_type: string | null;
   composition: string | null;

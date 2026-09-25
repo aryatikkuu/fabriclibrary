@@ -4,7 +4,7 @@ import { parseLook } from '@/features/look-search/look-tags';
 /** Validation for creating/updating fabric records via the API. */
 export const fabricCreateSchema = z.object({
   mill_id: z.string().uuid(),
-  fabric_code: z.string().min(1).max(64),
+  fabric_code: z.string().min(1).max(64).nullable(),
   fabric_name: z.string().max(200).nullish(),
   fabric_type: z.string().max(100).nullish(),
   composition: z.string().max(200).nullish(),

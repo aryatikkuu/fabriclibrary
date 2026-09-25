@@ -28,7 +28,7 @@ export function FabricCard({
         {primary?.public_url ? (
           <Image
             src={primary.public_url}
-            alt={fabric.fabric_name ?? fabric.fabric_code}
+            alt={fabric.fabric_name ?? fabric.fabric_code ?? "Fabric"}
             fill
             sizes="(max-width: 768px) 50vw, 25vw"
             className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
@@ -52,7 +52,7 @@ export function FabricCard({
 
       <div className="border-b border-seam pb-4 pt-4">
         <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
-          <span className="t-label">{fabric.fabric_code}</span>
+          <span className="t-label">{fabric.fabric_code ?? "No code"}</span>
           <span className="font-mono text-[10.5px] text-stone">{formatGsm(fabric.gsm)}</span>
         </div>
         <h3 className="mt-1.5 font-display text-lg leading-snug text-ink group-hover:underline group-hover:decoration-thread group-hover:decoration-1 group-hover:underline-offset-4">
