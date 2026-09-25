@@ -5,7 +5,8 @@ import { searchConfig } from '@/lib/config/search.config';
 
 interface FilterOption { value: string; label: string }
 
-const FIELD = 'border border-seam bg-paper px-2 py-1.5 text-sm text-ink focus:border-ink focus:outline-none';
+/** One height for selects and number inputs, so every filter row lines up. */
+const FIELD = 'h-9 border border-seam bg-paper px-2 text-sm text-ink focus:border-ink focus:outline-none';
 
 function Select({
   name, label, options, value, onChange, className = '',
@@ -45,11 +46,17 @@ function NumberField({
   );
 }
 
+const ROW = 'grid grid-cols-2 gap-4 border-y border-seam py-5 md:grid-cols-3 lg:grid-cols-5';
+
 const LAYOUTS = {
-  /** Full-width band under the search (mill pages). */
-  row: 'grid grid-cols-2 gap-4 border-y border-seam py-5 md:grid-cols-3 lg:grid-cols-5',
-  /** Beside the search bar on wide screens (search page); a band below it on small ones. */
-  column: 'grid grid-cols-2 gap-4 border-y border-seam py-5 md:grid-cols-3 lg:grid-cols-2 lg:border-y-0 lg:py-0',
+  /** Full-width band under the search. */
+  row: ROW,
+  /**
+   * The same band, but on wide screens it becomes a column while the photo
+   * drawer is open (the page moves it beside the search bar — see app/search/page.tsx).
+   */
+  // content-between: first row level with the top of the search bar, last row with the bottom of the drawer.
+  beside: `${ROW} lg:photo-open:grid-cols-2 lg:photo-open:content-between lg:photo-open:border-y-0 lg:photo-open:py-0`,
 };
 
 /** Filter rail driven entirely by search.config — no hardcoded options. */
@@ -78,7 +85,7 @@ export function FabricFilters({
     <div className={LAYOUTS[layout]}>
       <Select name="millSlug" label="Mill" value={searchParams.get('millSlug') ?? ''}
         options={mills.map((m) => ({ value: m.slug, label: m.name }))} onChange={setParam}
-        className={layout === 'column' ? 'lg:col-span-2' : ''} />
+        className={layout === 'beside' ? 'lg:photo-open:col-span-2' : ''} />
       <Select name="fabricType" label="Fabric type" value={searchParams.get('fabricType') ?? ''}
         options={toOptions(searchConfig.fabricTypes)} onChange={setParam} />
       <Select name="colorFamily" label="Colour" value={searchParams.get('colorFamily') ?? ''}

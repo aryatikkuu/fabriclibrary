@@ -33,7 +33,8 @@ export function FabricSearchBar({
   }
 
   return (
-    <div>
+    // data-photo-open lets the page move the filters beside the open photo drawer, in CSS only.
+    <div data-photo-open={photoOpen || undefined}>
       <div className="relative">
         {/* crosshair corner marks — on the bar itself, so the photo drawer below doesn't move them */}
         {['-left-1 -top-3', '-right-1 -top-3', '-bottom-3 -left-1', '-bottom-3 -right-1'].map((pos) => (

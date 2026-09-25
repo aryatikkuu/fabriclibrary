@@ -49,16 +49,18 @@ export default async function SearchPage({
         description={`By fabric code, name, fibre, weight, colour, use or mill${profile ? ' — or by photo' : ''}.`}
       />
 
-      {/* Search on the left, filters in the space beside it; stacked on small screens. */}
-      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,42rem)_minmax(0,1fr)] lg:items-start lg:gap-12">
-        <div>
+      {/* Filters sit below the search; while the photo drawer is open they move into
+          the empty space beside it (wide screens only). Pure CSS: the photo-open:
+          variant in tailwind.config.ts. */}
+      <div data-photo-area className="mt-10 grid gap-8 lg:photo-open:grid-cols-[minmax(0,42rem)_minmax(0,1fr)] lg:photo-open:gap-12">
+        <div className="max-w-2xl">
           <Suspense>
             <FabricSearchBar photoSearch={!!profile} />
             <LookChips />
           </Suspense>
         </div>
         <Suspense>
-          <FabricFilters layout="column" mills={mills.map((m) => ({ name: m.name, slug: m.slug }))} />
+          <FabricFilters layout="beside" mills={mills.map((m) => ({ name: m.name, slug: m.slug }))} />
         </Suspense>
       </div>
 
