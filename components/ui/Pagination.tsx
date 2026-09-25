@@ -2,6 +2,7 @@
 
 import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Arrow } from '@/components/ui/Arrow';
 
 /** Quiet prev/next pagination that preserves the active query string. */
 export function Pagination({
@@ -32,20 +33,20 @@ export function Pagination({
     >
       {page > 1 ? (
         <Link href={hrefFor(page - 1)} className="text-graphite hover:text-ink">
-          ← Previous
+          <Arrow direction="left" /> Previous
         </Link>
       ) : (
-        <span className="text-seam">← Previous</span>
+        <span className="text-seam"><Arrow direction="left" /> Previous</span>
       )}
       <span className="text-stone">
         Page {page} of {totalPages}
       </span>
       {page < totalPages ? (
         <Link href={hrefFor(page + 1)} className="text-graphite hover:text-ink">
-          Next →
+          Next <Arrow />
         </Link>
       ) : (
-        <span className="text-seam">Next →</span>
+        <span className="text-seam">Next <Arrow /></span>
       )}
     </nav>
   );

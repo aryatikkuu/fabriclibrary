@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { MillWithCount } from '@/services/mill.service';
 import { TechnicalLabel } from '@/components/ui/TechnicalLabel';
+import { Arrow } from '@/components/ui/Arrow';
 
 /** Mill index card — a labelled drawer in the archive. */
 export function MillCard({ mill }: { mill: MillWithCount }) {
@@ -22,7 +23,7 @@ export function MillCard({ mill }: { mill: MillWithCount }) {
         )}
       </div>
       <p className="t-label mt-10 group-hover:text-ink">
-        {mill.fabricCount} {mill.fabricCount === 1 ? 'fabric' : 'fabrics'} →
+        {mill.fabricCount} {mill.fabricCount === 1 ? 'fabric' : 'fabrics'} <Arrow />
       </p>
     </Link>
   );
