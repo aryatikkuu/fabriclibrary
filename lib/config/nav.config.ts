@@ -19,7 +19,6 @@ export interface NavItem {
 export const primaryNav: readonly NavItem[] = [
   { href: '/fabrics', label: 'Fabrics' },
   { href: '/search', label: 'Search' },
-  { href: '/assistant', label: 'Assistant' },
   { href: '/review', label: 'Review', permission: 'review.read', accent: true },
 ] as const;
 

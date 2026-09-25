@@ -18,7 +18,7 @@ photo folder ──► npm run extract (OpenAI Vision, resumable) ──► JSON
 | Web app | Next.js 14 (App Router) · TypeScript · Tailwind CSS |
 | Database / Auth / Storage | Supabase (Postgres, RLS, email auth, Storage) |
 | Automation | Node scripts in `scripts/` (see below). n8n workflow retained in `n8n/workflows/` as an alternative path. |
-| AI | OpenAI Vision (`gpt-5.4-nano`, cheapest) for label extraction + search assistant |
+| AI | OpenAI Vision (`gpt-5.4-nano`, cheapest) for label extraction; `gpt-5.4-mini` + text embeddings for photo search |
 | Validation | Zod — AI output never touches the database unvalidated |
 | Tests | Vitest |
 | Hosting | Vercel (app) + Supabase cloud |
