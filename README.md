@@ -74,6 +74,7 @@ of keeping copies. Needs Node 22.6+.
 | `npm run bulk-insert -- <batch.json>` | Import an already-extracted JSON batch (used by `extract`) |
 | `npm run verify-tag -- [--budget 1]` | Re-read every label blind and tag what each fabric looks like (paid; resumable; report in `reports/`) |
 | `npm run verify-tag -- --save [--fix-codes] [--apply]` | Store the tags, descriptions and label checks; `--fix-codes` fixes near-miss codes and sends big disagreements to review |
+| `npm run retag -- [--budget 1]` then `-- --save [--groups detail] --apply` | Re-tag the look of checks, stripes, textured fabrics and swatch cards after the tag list grows (≈0.13¢ per fabric; saves only the named groups) |
 | `npm run embed [-- --all]` | Embed new/changed fabric descriptions for photo search (run after `verify-tag -- --save` and after a restore; whole library ≈ 0.2¢) |
 | `npm run dedupe [-- --apply]` | Merge duplicate fabric records (dry run unless `--apply`; writes the plan to `backups/`) |
 | `npm run backup [-- --with-files]` | Snapshot every table (+ pipeline state files) to `backups/<date>/`. Copy it off this machine. |

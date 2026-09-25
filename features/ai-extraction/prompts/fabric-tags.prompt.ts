@@ -12,6 +12,8 @@ export function buildTagInstructions(vocabulary: Record<string, readonly string[
   return `   Choose tags ONLY from these lists (use the exact words):
 ${lists}
    pattern: 1-2 values. scale: 1 value ("none" for solid). colour: 1-4 values, dominant first.
+   detail: 0-2 values naming the exact check, stripe or weave pattern (e.g. gingham vs tartan,
+   pinstripe vs awning-stripe, herringbone); leave it empty for plain solids, prints and florals.
    texture, finish, technique: 0-2 values each. construction: 1 value.`;
 }
 
@@ -54,8 +56,26 @@ ${use}
 
 Return JSON only:
 {
-  "tags": { "pattern": [], "scale": [], "colour": [], "texture": [], "finish": [], "construction": [], "technique": [] },
+  "tags": { "pattern": [], "detail": [], "scale": [], "colour": [], "texture": [], "finish": [], "construction": [], "technique": [] },
   "use": [],
   "description": ""
+}`;
+}
+
+/**
+ * Visual tags only, for re-tagging library photos (scripts/retag-looks.mjs) —
+ * no label reading, so it costs about half of the full verify call.
+ * Same rules as fabric-verify.prompt.ts.
+ */
+export function buildRetagPrompt(vocabulary: Record<string, readonly string[]>): string {
+  return `You are tagging a fabric library. The photo shows a fabric sample on a hanger / swatch card.
+Describe only the cloth itself. Ignore the hanger, header card, labels, stickers, desk and background.
+${buildTagInstructions(vocabulary)}
+   If the photo shows several different fabrics, tag what they have in common and set multi_fabric true.
+
+Return JSON only:
+{
+  "tags": { "pattern": [], "detail": [], "scale": [], "colour": [], "texture": [], "finish": [], "construction": [], "technique": [] },
+  "multi_fabric": false
 }`;
 }

@@ -13,6 +13,12 @@ export const visualTags = {
     'solid', 'textured-solid', 'stripe', 'check', 'floral', 'botanical', 'geometric',
     'abstract', 'animal', 'paisley', 'dot', 'damask', 'camouflage', 'melange', 'novelty',
   ],
+  /** Which check / stripe / weave pattern exactly — "check" alone mixes gingham with tartan. */
+  detail: [
+    'gingham', 'houndstooth', 'glen-check', 'tartan', 'windowpane', 'buffalo-check', 'checkerboard',
+    'tattersall', 'micro-check', 'pinstripe', 'chalk-stripe', 'pencil-stripe', 'bengal-stripe',
+    'awning-stripe', 'multi-stripe', 'herringbone', 'chevron', 'diamond', 'birdseye', 'twill-line',
+  ],
   scale: ['none', 'small', 'medium', 'large'],
   colour: [
     'white', 'cream', 'beige', 'khaki', 'brown', 'black', 'charcoal', 'grey', 'silver',
@@ -40,7 +46,7 @@ export type VisualTagGroup = keyof typeof visualTags;
  */
 export const lookSearch = {
   weights: {
-    pattern: 3, colour: 3, use: 2, technique: 2, texture: 1.5, scale: 1, construction: 1, finish: 0.5,
+    pattern: 3, colour: 3, detail: 2, use: 2, technique: 2, texture: 1.5, scale: 1, construction: 1, finish: 0.5,
   },
   /** Hide fabrics matching less than this share of the weighted search (0–1). */
   minScore: 0.3,

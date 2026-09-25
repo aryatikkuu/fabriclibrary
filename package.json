@@ -15,6 +15,7 @@
     "extract": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/batch-extract.mjs",
     "bulk-insert": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/bulk-insert.mjs",
     "verify-tag": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/verify-and-tag.mjs",
+    "retag": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/retag-looks.mjs",
     "embed": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/embed-descriptions.mjs",
     "dedupe": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/dedupe-fabrics.mjs",
     "backup": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/backup.mjs",

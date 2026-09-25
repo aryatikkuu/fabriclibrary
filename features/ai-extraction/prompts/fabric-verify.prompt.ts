@@ -32,7 +32,7 @@ Return JSON only:
   "label": { "fabric_code": "", "code_field": "", "quality_number": "", "fabric_name": "", "composition": "", "gsm": null, "width": "", "color": "" },
   "label_count": 1,
   "label_readable": true,
-  "tags": { "pattern": [], "scale": [], "colour": [], "texture": [], "finish": [], "construction": [], "technique": [] },
+  "tags": { "pattern": [], "detail": [], "scale": [], "colour": [], "texture": [], "finish": [], "construction": [], "technique": [] },
   "multi_fabric": false,
   "description": ""
 }`;
