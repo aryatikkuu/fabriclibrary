@@ -14,6 +14,7 @@ ${lists}
    pattern: 1-2 values. scale: 1 value ("none" for solid). colour: 1-4 values, dominant first.
    detail: 0-2 values naming the exact check, stripe or weave pattern (e.g. gingham vs tartan,
    pinstripe vs awning-stripe, herringbone); leave it empty for plain solids, prints and florals.
+   A dark photo can hide a pattern: look closely for weave, sheen or jacquard motifs before calling it solid.
    texture, finish, technique: 0-2 values each. construction: 1 value.`;
 }
 
