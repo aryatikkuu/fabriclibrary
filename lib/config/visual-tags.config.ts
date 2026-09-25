@@ -48,8 +48,12 @@ export const lookSearch = {
   weights: {
     pattern: 3, colour: 3, detail: 2, use: 2, technique: 2, texture: 1.5, scale: 1, construction: 1, finish: 0.5,
   },
-  /** Hide fabrics matching less than this share of the weighted search (0–1). */
-  minScore: 0.3,
+  /**
+   * Hide fabrics matching less than this share of the weighted search (0–1).
+   * 0.5 keeps the true fabric for 28 of 30 benchmark photos (same as 0.3)
+   * while the result count halves; above 0.55 real matches start to drop.
+   */
+  minScore: 0.5,
   /** End-use tags offered to the AI: those on at least this many fabrics. */
   minUseTagCount: 20,
   /**

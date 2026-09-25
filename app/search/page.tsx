@@ -64,8 +64,9 @@ export default async function SearchPage({
 
       <div className="mt-12 flex items-baseline justify-between border-b border-seam pb-3">
         <span className="font-mono text-[11px] uppercase tracking-label text-stone">
-          {fabrics.total} {fabrics.total === 1 ? 'result' : 'results'}
-          {parsed.look?.length ? ', closest match first' : parsed.q ? ` for “${parsed.q}”` : ''}
+          {parsed.look?.length
+            ? `${fabrics.total} similar ${fabrics.total === 1 ? 'fabric' : 'fabrics'}, closest first`
+            : `${fabrics.total} ${fabrics.total === 1 ? 'result' : 'results'}${parsed.q ? ` for “${parsed.q}”` : ''}`}
         </span>
       </div>
 

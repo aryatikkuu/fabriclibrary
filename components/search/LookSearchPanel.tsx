@@ -83,56 +83,67 @@ export function LookSearchPanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <form onSubmit={submit} className="mt-4 border border-ink bg-paper p-5">
-      <div className="flex items-baseline justify-between">
-        <span className="font-mono text-[10.5px] uppercase tracking-label text-ink">Search by photo</span>
-        <button type="button" onClick={onClose} className="font-mono text-[10.5px] uppercase tracking-label text-stone hover:text-ink">
-          Close
-        </button>
-      </div>
-
+    // A drawer hanging off the search bar: same frame, one tone darker, no second box.
+    <form
+      onSubmit={submit}
+      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false); }}
+      onDrop={(e) => { e.preventDefault(); setDragging(false); choose(e.dataTransfer.files?.[0]); }}
+      className="flex gap-4 border-x border-b border-ink bg-linen p-4 sm:gap-5 sm:p-5"
+    >
       <button
         type="button"
         onClick={() => fileInput.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => { e.preventDefault(); setDragging(false); choose(e.dataTransfer.files?.[0]); }}
-        className={`mt-4 flex min-h-40 w-full items-center justify-center border border-dashed p-4 transition-colors ${
-          dragging ? 'border-ink bg-linen' : 'border-seam hover:border-ink'
+        aria-label={preview ? 'Change photo' : 'Choose a photo'}
+        className={`group relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden border bg-paper transition-colors sm:h-32 sm:w-32 ${
+          dragging ? 'border-ink' : preview ? 'border-seam hover:border-ink' : 'border-dashed border-stone hover:border-ink'
         }`}
       >
         {preview ? (
-          // eslint-disable-next-line @next/next/no-img-element -- local object URL, not optimisable
-          <img src={preview} alt="Your photo" className="max-h-56 object-contain" />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- local object URL, not optimisable */}
+            <img src={preview} alt="Your photo" className="h-full w-full object-cover" />
+            <span className="absolute inset-x-0 bottom-0 bg-ink/80 py-1 text-center font-mono text-[9.5px] uppercase tracking-label text-paper opacity-0 transition-opacity group-hover:opacity-100">
+              Change
+            </span>
+          </>
         ) : (
-          <span className="text-center text-sm text-graphite">
-            Drop a photo here, paste one, or <span className="underline underline-offset-4">choose a file</span>
-            <span className="mt-1 block font-mono text-[10.5px] text-stone">A close-up of the cloth works best</span>
+          <span className="flex flex-col items-center gap-2 text-stone group-hover:text-ink">
+            <svg viewBox="0 0 20 20" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.25">
+              <path d="M2.5 6.5 H6 L7.5 4.5 H12.5 L14 6.5 H17.5 V15.5 H2.5 Z" strokeLinejoin="round" />
+              <circle cx="10" cy="10.75" r="3" />
+            </svg>
+            <span className="font-mono text-[9.5px] uppercase tracking-label">{dragging ? 'Drop it' : 'Add photo'}</span>
           </span>
         )}
       </button>
       <input ref={fileInput} type="file" accept="image/*" hidden onChange={(e) => choose(e.target.files?.[0])} />
 
-      <label className="mt-4 flex flex-col gap-1">
-        <span className="font-mono text-[10px] uppercase tracking-label text-stone">What is it for? (optional)</span>
+      <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
+        <p className="text-sm leading-snug text-graphite">
+          Drop, paste or choose a close-up of the cloth to find fabrics that look like it.
+        </p>
         <input
           value={note}
           onChange={(e) => setNote(e.target.value)}
           maxLength={200}
-          placeholder="e.g. summer shirts, lightweight dresses, upholstery"
-          className="border border-seam bg-paper px-3 py-2 text-sm text-ink placeholder:text-stone focus:border-ink focus:outline-none"
+          aria-label="What is it for? (optional)"
+          placeholder="What is it for? (optional)"
+          className="w-full border border-seam bg-paper px-3 py-2 text-sm text-ink placeholder:text-stone focus:border-ink focus:outline-none"
         />
-      </label>
-
-      <div className="mt-4 flex items-center gap-4">
-        <button
-          type="submit"
-          disabled={busy}
-          className="border border-ink px-6 py-2.5 font-mono text-[10.5px] uppercase tracking-label text-ink transition-colors hover:bg-ink hover:text-paper disabled:opacity-50"
-        >
-          {busy ? 'Reading photo…' : 'Find similar'}
-        </button>
-        {error && <span role="alert" className="text-sm text-thread">{error}</span>}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <button
+            type="submit"
+            disabled={busy}
+            className="bg-ink px-5 py-2.5 font-mono text-[10.5px] uppercase tracking-label text-paper transition-opacity hover:opacity-85 disabled:opacity-50"
+          >
+            {busy ? 'Reading photo…' : 'Find similar'}
+          </button>
+          <button type="button" onClick={onClose} className="font-mono text-[10.5px] uppercase tracking-label text-stone hover:text-ink">
+            Cancel
+          </button>
+          {error && <span role="alert" className="basis-full text-sm text-thread">{error}</span>}
+        </div>
       </div>
     </form>
   );
