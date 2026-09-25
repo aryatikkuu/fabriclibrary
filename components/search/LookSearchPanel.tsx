@@ -25,7 +25,7 @@ async function shrink(file: Blob): Promise<Blob> {
  * One API call turns that into tags; the tags go into the URL (?look=…) and
  * the server page ranks the library from there, keeping any active filters.
  */
-export function LookSearchPanel({ onClose }: { onClose: () => void }) {
+export function LookSearchPanel({ active, onClose }: { active: boolean; onClose: () => void }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -46,12 +46,13 @@ export function LookSearchPanel({ onClose }: { onClose: () => void }) {
     });
   }
 
-  // Paste a photo from the clipboard while the panel is open.
+  // Paste a photo from the clipboard while photo search is showing.
   useEffect(() => {
+    if (!active) return;
     const onPaste = (e: ClipboardEvent) => choose(e.clipboardData?.files?.[0]);
     window.addEventListener('paste', onPaste);
     return () => window.removeEventListener('paste', onPaste);
-  }, []);
+  }, [active]);
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
   async function submit(event: React.FormEvent) {
@@ -83,19 +84,19 @@ export function LookSearchPanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    // A drawer hanging off the search bar: same frame and background, no second box.
+    // Sits inside the search bar's frame (FabricSearchBar), in place of the text search.
     <form
       onSubmit={submit}
       onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
       onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false); }}
       onDrop={(e) => { e.preventDefault(); setDragging(false); choose(e.dataTransfer.files?.[0]); }}
-      className="flex gap-4 border-x border-b border-ink bg-paper p-4 sm:gap-5 sm:p-5"
+      className="flex flex-col gap-4 p-4 sm:flex-row sm:gap-5 sm:p-5"
     >
       <button
         type="button"
         onClick={() => fileInput.current?.click()}
         aria-label={preview ? 'Change photo' : 'Choose a photo'}
-        className={`group relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden border transition-colors sm:h-32 sm:w-32 ${
+        className={`group relative flex h-28 w-full shrink-0 items-center justify-center overflow-hidden border transition-colors sm:h-36 sm:w-36 ${
           dragging ? 'border-ink bg-linen' : preview ? 'border-seam hover:border-ink' : 'border-dashed border-seam hover:border-ink'
         }`}
       >
@@ -134,9 +135,6 @@ export function LookSearchPanel({ onClose }: { onClose: () => void }) {
             className="bg-ink px-5 py-2.5 font-mono text-[10.5px] uppercase tracking-label text-paper transition-opacity hover:opacity-85 disabled:opacity-50"
           >
             {busy ? 'Reading photo…' : 'Find similar'}
-          </button>
-          <button type="button" onClick={onClose} className="font-mono text-[10.5px] uppercase tracking-label text-stone hover:text-ink">
-            Cancel
           </button>
           {error && <span role="alert" className="basis-full text-sm text-thread">{error}</span>}
         </div>

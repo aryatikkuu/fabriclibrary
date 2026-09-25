@@ -53,7 +53,7 @@ export default async function SearchPage({
           the empty space beside it (wide screens only). Pure CSS: the photo-open:
           variant in tailwind.config.ts. */}
       <div data-photo-area className="mt-10 grid gap-8 lg:photo-open:grid-cols-[minmax(0,42rem)_minmax(0,1fr)] lg:photo-open:gap-12">
-        <div className="max-w-2xl">
+        <div className="flex max-w-2xl flex-col">
           <Suspense>
             <FabricSearchBar photoSearch={!!profile} />
             <LookChips />
