@@ -5,6 +5,11 @@ import { formatDate, formatGsm } from '@/utils/format';
  * The spec strip — set like a mill testing report. Row numbers in mono,
  * labels in tracked caps, values in serif. Reads as a printed document.
  */
+/** Spec row grid — declared once, used by every row including Tags. */
+const SPEC_ROW =
+  'grid grid-cols-[2rem_1fr] items-baseline gap-x-4 gap-y-1 border-b border-seam py-3.5 ' +
+  '[&>dd]:col-start-2 md:grid-cols-[2.5rem_160px_1fr] md:gap-y-0 md:[&>dd]:col-start-auto';
+
 export function FabricTechnicalData({ fabric }: { fabric: FabricWithRelations }) {
   const rows: [string, string][] = [
     ['Mill', fabric.mill?.name ?? '—'],
@@ -24,13 +29,13 @@ export function FabricTechnicalData({ fabric }: { fabric: FabricWithRelations })
     <div>
       <div className="flex items-baseline justify-between border-b-2 border-ink pb-2">
         <span className="t-label text-ink">[ Spec sheet ]</span>
-        <span className="font-mono text-[10.5px] text-stone">{fabric.fabric_code}</span>
+        <span className="font-mono text-[10.5px] text-stone">{fabric.fabric_code ?? "No code"}</span>
       </div>
       <dl>
         {rows.map(([label, value], i) => (
           <div
             key={label}
-            className="grid grid-cols-[2rem_120px_1fr] items-baseline gap-4 border-b border-seam py-3.5 md:grid-cols-[2.5rem_160px_1fr]"
+            className={SPEC_ROW}
           >
             <span aria-hidden className="font-mono text-[10px] text-stone">
               {String(i + 1).padStart(2, '0')}
@@ -40,7 +45,7 @@ export function FabricTechnicalData({ fabric }: { fabric: FabricWithRelations })
           </div>
         ))}
         {tags.length > 0 && (
-          <div className="grid grid-cols-[2rem_120px_1fr] items-baseline gap-4 border-b border-seam py-3.5 md:grid-cols-[2.5rem_160px_1fr]">
+          <div className={SPEC_ROW}>
             <span aria-hidden className="font-mono text-[10px] text-stone">
               {String(rows.length + 1).padStart(2, '0')}
             </span>

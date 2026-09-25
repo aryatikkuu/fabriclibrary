@@ -7,6 +7,7 @@ import type {
   Paginated,
 } from '@/types/fabric';
 import type { FabricCreateInput, FabricUpdateInput } from '@/features/fabrics/types/fabric.schema';
+import { lookSearch } from '@/lib/config/visual-tags.config';
 
 const FABRIC_WITH_RELATIONS = '*, mill:mills(id, name, slug), images:fabric_images(*), tags:fabric_tags(*)';
 
@@ -39,6 +40,7 @@ export class FabricRepository {
     const page = params.page ?? 1;
     const pageSize = params.pageSize ?? 24;
     const from = (page - 1) * pageSize;
+    if (params.look?.length) return this.searchByLook(params.look, params, page, pageSize);
 
     let query = this.db
       .from('fabrics')
@@ -74,6 +76,55 @@ export class FabricRepository {
       page,
       pageSize,
     };
+  }
+
+  /**
+   * Photo search: the database ranks every fabric against the tags — and,
+   * when given, the description embedding — in one query
+   * (match_fabrics_by_look, migrations 0006/0008), then only the page being
+   * shown is loaded with its images.
+   */
+  private async searchByLook(
+    look: string[], params: FabricSearchParams, page: number, pageSize: number,
+  ): Promise<Paginated<FabricWithRelations>> {
+    const { data: ranked, error } = await this.db.rpc('match_fabrics_by_look', {
+      look,
+      group_weights: lookSearch.weights,
+      min_score: lookSearch.minScore,
+      p_mill_slug: params.millSlug ?? null,
+      p_fabric_type: params.fabricType ?? null,
+      p_color_family: params.colorFamily ?? null,
+      p_composition: params.composition ?? null,
+      p_gsm_min: params.gsmMin ?? null,
+      p_gsm_max: params.gsmMax ?? null,
+      p_review_status: params.reviewStatus ?? null,
+      p_limit: pageSize,
+      p_offset: (page - 1) * pageSize,
+      query_embedding: params.lookEmbedding ? JSON.stringify(params.lookEmbedding) : null,
+      embedding_weight: params.lookEmbedding ? lookSearch.embeddingWeight : 0,
+    });
+    if (error) throw error;
+    const rows = (ranked ?? []) as { fabric_id: string; score: number; total: number }[];
+    if (rows.length === 0) return { items: [], total: 0, page, pageSize };
+
+    const { data, error: loadError } = await this.db
+      .from('fabrics')
+      .select(FABRIC_WITH_RELATIONS)
+      .in('id', rows.map((r) => r.fabric_id));
+    if (loadError) throw loadError;
+
+    const byId = new Map(((data ?? []) as unknown as FabricWithRelations[]).map((f) => [f.id, f]));
+    const items = rows
+      .filter((r) => byId.has(r.fabric_id))
+      .map((r) => ({ ...byId.get(r.fabric_id)!, match: Math.round(r.score * 100) }));
+    return { items, total: Number(rows[0].total), page, pageSize };
+  }
+
+  /** End-use tags common enough to offer the AI when reading a buyer's note. */
+  async popularUseTags(): Promise<string[]> {
+    const { data, error } = await this.db.rpc('popular_use_tags', { min_count: lookSearch.minUseTagCount });
+    if (error) throw error;
+    return ((data ?? []) as { tag: string }[]).map((r) => r.tag);
   }
 
   async create(input: FabricCreateInput): Promise<Fabric> {

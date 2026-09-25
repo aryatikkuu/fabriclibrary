@@ -63,6 +63,34 @@ Unit tests cover the pure core: similarity scoring, the extraction Zod contract,
 - Formatting of display values goes through `utils/format.ts`.
 - Imports use the `@/` alias (tsconfig paths).
 
+## Responsive & touch conventions
+
+The site is designed desktop-out, but every page must hold together at 375px.
+
+- **Breakpoint ladder.** Base styles are the *mobile* case; `sm:`/`md:` layer the
+  wider layouts on top. Never write a desktop-only value at the base layer — that
+  is what broke the masthead (a flat nav row with no mobile fallback).
+- **Navigation lives in `lib/config/nav.config.ts`.** The desktop bar and the
+  mobile drawer both render that one list through `components/layout/NavLink.tsx`,
+  so links cannot drift apart. Role gating is resolved on the *server* in
+  `SiteHeader`; `MobileNav` receives only the finished `{href, label}` list and
+  never sees a profile.
+- **Touch targets: `.tap-target`** (`globals.css`) gives a ≥44px minimum, and
+  relaxes to `min-height: 0` under `@media (pointer: fine)` so desktop keeps its
+  compact editorial rhythm. Use the class; don't hand-roll `min-h-[44px]`.
+- **`next/image` `sizes` must match the *rendered* width at each breakpoint.**
+  A mismatch silently ships a too-small file and the image renders soft — this
+  was a real defect in the review queue (`sizes="200px"` on an image that is
+  ~90vw on a phone). When a column is fixed only from `md` up, write
+  `sizes="(max-width: 768px) 90vw, 200px"`.
+- **Opacity on themed colours.** Tailwind's `/opacity` modifier cannot inject
+  alpha into a hex held in a CSS variable — `bg-paper/95` resolves to
+  *transparent*, not a veil. Use `.bg-paper-veil` (a `color-mix` declared once in
+  `globals.css`, theme-aware) for sticky surfaces. Overlay panels that must
+  obscure the page use solid `bg-paper` instead.
+- **`--header-h`** is the single source of truth for masthead height; the mobile
+  drawer offsets from it. Change it in `globals.css`, not per-component.
+
 ## Gotchas
 
 - `useSearchParams()` in a client component must sit under `<Suspense>` (already done for search bar/filters/pagination).

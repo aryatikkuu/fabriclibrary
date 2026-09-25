@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import plugin from 'tailwindcss/plugin';
 
 /**
  * Tailwind maps semantic names → CSS variables defined in app/globals.css.
@@ -39,7 +40,13 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // `photo-open:` styles an element while the search bar's photo drawer is open:
+    // the [data-photo-area] wrapper itself, or anything inside it (app/search/page.tsx).
+    plugin(({ addVariant }) => {
+      addVariant('photo-open', ['&[data-photo-area]:has([data-photo-open])', '[data-photo-area]:has([data-photo-open]) &']);
+    }),
+  ],
 };
 
 export default config;

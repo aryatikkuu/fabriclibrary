@@ -2,7 +2,7 @@
 /**
  * Bulk-insert fabrics extracted manually (no OpenAI call) from hanger photos.
  *
- * Usage: node scripts/bulk-insert.mjs <batch.json>
+ * Usage: npm run bulk-insert -- <batch.json>
  *
  * batch.json is an array of:
  *   {
@@ -12,110 +12,74 @@
  *     extraction_confidence, review_status
  *   }
  *
+ * Optional per-record image fixes: `rotate` (0/90/180/270, clockwise) and
+ * `crop` ({ x, y, w, h } as 0-1 fractions of the rotated image).
+ *
  * Upserts fabrics on (mill_id, fabric_code), uploads the source photo to
- * Storage, and attaches it as the primary image.
+ * Storage, and attaches it (as the cover if the fabric has none yet).
  */
 
-import { createClient } from '@supabase/supabase-js';
-import { readFileSync, existsSync, mkdtempSync } from 'node:fs';
-import { resolve, join } from 'node:path';
-import { tmpdir } from 'node:os';
-import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { resolve, basename } from 'node:path';
+import { createHash } from 'node:crypto';
+import sharp from 'sharp';
+import { adminClient, STORAGE_BUCKET, contentTypeFor } from './lib/common.mjs';
+import { storagePaths } from '../lib/config/storage.config.ts';
 
-for (const file of ['.env.local', '.env']) {
-  const path = resolve(process.cwd(), file);
-  if (!existsSync(path)) continue;
-  for (const line of readFileSync(path, 'utf8').split('\n')) {
-    const match = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-    if (match && !process.env[match[1]]) {
-      process.env[match[1]] = match[2].replace(/^["']|["']$/g, '');
-    }
-  }
-}
-
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const bucket = process.env.STORAGE_BUCKET_NAME ?? 'textile-library';
-
-if (!url || !serviceKey) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.');
-  process.exit(1);
-}
+const db = adminClient();
+const bucket = STORAGE_BUCKET();
 
 const batchPath = process.argv[2];
 if (!batchPath) {
-  console.error('Usage: node scripts/bulk-insert.mjs <batch.json>');
+  console.error('Usage: npm run bulk-insert -- <batch.json>');
   process.exit(1);
 }
 
-const db = createClient(url, serviceKey, { auth: { persistSession: false } });
-
-function sanitize(segment) {
-  return segment
-    .trim()
-    .replace(/[^a-zA-Z0-9._-]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^[-.]+|[-.]+$/g, '');
-}
-
-const mimeFromExt = (filename) => {
-  const ext = filename.toLowerCase().split('.').pop();
-  if (ext === 'png') return 'image/png';
-  if (ext === 'webp') return 'image/webp';
-  return 'image/jpeg';
-};
-
-const tmpDir = mkdtempSync(join(tmpdir(), 'fabric-orient-'));
-
-function getDims(path) {
-  const out = execFileSync('sips', ['-g', 'pixelWidth', '-g', 'pixelHeight', path], {
-    encoding: 'utf8',
-  });
+/** Row mapping for a batch record — one definition, used by insert and update. */
+function fabricFieldsFor(r, millId) {
   return {
-    width: Number(out.match(/pixelWidth:\s*(\d+)/)?.[1]),
-    height: Number(out.match(/pixelHeight:\s*(\d+)/)?.[1]),
+    mill_id: millId,
+    fabric_code: r.fabric_code,
+    fabric_name: r.fabric_name ?? null,
+    fabric_type: r.fabric_type ?? null,
+    composition: r.composition ?? null,
+    gsm: r.gsm ?? null,
+    width: r.width ?? null,
+    color: r.color ?? null,
+    color_family: r.color_family ?? null,
+    season: r.season ?? null,
+    suggested_use: r.suggested_use ?? null,
+    description: r.description ?? null,
+    extraction_confidence: r.extraction_confidence ?? null,
+    review_status: r.review_status ?? 'needs_review',
   };
 }
 
+/** Opt-in escape hatch: re-extract over rows a human already approved/rejected. */
+const overwriteReviewed = process.env.BULK_INSERT_OVERWRITE_REVIEWED === '1';
+
 /** There is no reliable heuristic for these source photos — neither raw
  * dimensions nor a fixed angle predicts the fix (verified: different photos
- * in the same folder need -90, 180, or no rotation at all). Every record
- * must carry an explicit `rotate` value (0/90/180/270, clockwise) determined
- * by actually viewing that photo. Records without one are left untouched
- * rather than guessed. */
-function correctOrientation(srcPath, degrees) {
-  if (!degrees) return srcPath;
-  try {
-    const outPath = join(tmpDir, `${Date.now()}-${Math.random().toString(36).slice(2)}.jpeg`);
-    execFileSync('sips', ['-r', String(degrees), srcPath, '--out', outPath], { stdio: 'ignore' });
-    return outPath;
-  } catch {
-    return srcPath;
+ * in the same folder need -90, 180, or no rotation at all). So a record must
+ * carry an explicit `rotate` value determined by viewing that photo; records
+ * without one are uploaded untouched rather than guessed.
+ *
+ * `crop` lets a multi-colourway range-card photo yield a distinct swatch
+ * image per fabric record. */
+async function imageBytes(r) {
+  if (!r.rotate && !r.crop) return readFileSync(r.image_path);
+  let img = sharp(r.image_path);
+  if (r.rotate) img = sharp(await img.rotate(r.rotate).toBuffer());
+  if (r.crop) {
+    const { width, height } = await img.metadata();
+    img = img.extract({
+      left: Math.round(r.crop.x * width),
+      top: Math.round(r.crop.y * height),
+      width: Math.max(1, Math.round(r.crop.w * width)),
+      height: Math.max(1, Math.round(r.crop.h * height)),
+    });
   }
-}
-
-/** Optional per-record crop, as fractions (0-1) of the oriented image:
- * { x, y, w, h }. Lets multi-colorway range-card photos yield a distinct
- * swatch image per fabric record. */
-function applyCrop(srcPath, crop) {
-  if (!crop) return srcPath;
-  try {
-    const { width, height } = getDims(srcPath);
-    if (!width || !height) return srcPath;
-    const px = Math.round(crop.x * width);
-    const py = Math.round(crop.y * height);
-    const pw = Math.max(1, Math.round(crop.w * width));
-    const ph = Math.max(1, Math.round(crop.h * height));
-    const outPath = join(tmpDir, `${Date.now()}-${Math.random().toString(36).slice(2)}-crop.jpeg`);
-    execFileSync(
-      'sips',
-      ['--cropOffset', String(py), String(px), '-c', String(ph), String(pw), srcPath, '--out', outPath],
-      { stdio: 'ignore' },
-    );
-    return outPath;
-  } catch {
-    return srcPath;
-  }
+  return img.toBuffer();
 }
 
 async function main() {
@@ -133,24 +97,30 @@ async function main() {
 
   let ok = 0;
   let failed = 0;
+  let preserved = 0;
 
   for (const r of records) {
     try {
+      // An unread code must not upsert onto (mill, '') — that silently merged
+      // every unreadable label into one record. Give each photo its own
+      // placeholder code instead; it stays in needs_review for a human.
+      if (!String(r.fabric_code ?? '').trim()) {
+        r.fabric_code = `UNREAD-${createHash('md5').update(readFileSync(r.image_path)).digest('hex').slice(0, 8)}`;
+      }
       const millId = await resolveMill(r.mill_slug);
-      const filename = r.image_path.split('/').pop();
-      const storagePath = `mills/${r.mill_slug}/fabrics/${sanitize(r.fabric_code)}/images/${sanitize(filename)}`;
-      const correctedPath = applyCrop(correctOrientation(r.image_path, r.rotate), r.crop);
-      const buffer = readFileSync(correctedPath);
+      const filename = basename(r.image_path);
+      const storagePath = storagePaths.fabricImage(r.mill_slug, r.fabric_code, filename);
+      const buffer = await imageBytes(r);
 
       const { error: uploadError } = await db.storage
         .from(bucket)
-        .upload(storagePath, buffer, { contentType: mimeFromExt(filename), upsert: true });
+        .upload(storagePath, buffer, { contentType: contentTypeFor(filename), upsert: true });
       if (uploadError) throw uploadError;
       const publicUrl = db.storage.from(bucket).getPublicUrl(storagePath).data.publicUrl;
 
       const { data: existing, error: findError } = await db
         .from('fabrics')
-        .select('id')
+        .select('id, review_status')
         .eq('mill_id', millId)
         .eq('fabric_code', r.fabric_code)
         .maybeSingle();
@@ -158,49 +128,35 @@ async function main() {
 
       let fabricId = existing?.id;
       if (fabricId) {
-        // `imageOnly` records (e.g. retroactive crop passes) must never
-        // overwrite already-reviewed field data with nulls.
-        if (!r.imageOnly) {
-          const fabricFields = {
-            mill_id: millId,
-            fabric_code: r.fabric_code,
-            fabric_name: r.fabric_name ?? null,
-            fabric_type: r.fabric_type ?? null,
-            composition: r.composition ?? null,
-            gsm: r.gsm ?? null,
-            width: r.width ?? null,
-            color: r.color ?? null,
-            color_family: r.color_family ?? null,
-            season: r.season ?? null,
-            suggested_use: r.suggested_use ?? null,
-            description: r.description ?? null,
-            extraction_confidence: r.extraction_confidence ?? null,
-            review_status: r.review_status ?? 'needs_review',
-          };
-          const { error: updateError } = await db.from('fabrics').update(fabricFields).eq('id', fabricId);
+        // Never let a re-import undo a human decision.
+        //
+        // A single fabric_code is usually photographed several times (front/back,
+        // duplicate hanger shots), so the same record gets re-imported on later
+        // passes. If those passes rewrote the row, an already-reviewed fabric
+        // would silently revert to `needs_review` and any corrections a reviewer
+        // typed in the queue would be overwritten by fresh model output.
+        //
+        // So: once a record has been approved or rejected, the import only
+        // attaches the new image. Records still sitting in the queue are
+        // refreshed as normal. Set BULK_INSERT_OVERWRITE_REVIEWED=1 to force a
+        // full re-extraction over reviewed rows.
+        const reviewed = existing.review_status === 'approved' || existing.review_status === 'rejected';
+        const skipFields = r.imageOnly || (reviewed && !overwriteReviewed);
+
+        if (skipFields) {
+          if (reviewed && !r.imageOnly) preserved += 1;
+        } else {
+          const { error: updateError } = await db
+            .from('fabrics')
+            .update(fabricFieldsFor(r, millId))
+            .eq('id', fabricId);
           if (updateError) throw updateError;
         }
       } else {
         if (r.imageOnly) throw new Error('imageOnly record but no existing fabric found');
-        const fabricFields = {
-          mill_id: millId,
-          fabric_code: r.fabric_code,
-          fabric_name: r.fabric_name ?? null,
-          fabric_type: r.fabric_type ?? null,
-          composition: r.composition ?? null,
-          gsm: r.gsm ?? null,
-          width: r.width ?? null,
-          color: r.color ?? null,
-          color_family: r.color_family ?? null,
-          season: r.season ?? null,
-          suggested_use: r.suggested_use ?? null,
-          description: r.description ?? null,
-          extraction_confidence: r.extraction_confidence ?? null,
-          review_status: r.review_status ?? 'needs_review',
-        };
         const { data: inserted, error: insertError } = await db
           .from('fabrics')
-          .insert(fabricFields)
+          .insert(fabricFieldsFor(r, millId))
           .select('id')
           .single();
         if (insertError) throw insertError;
@@ -216,12 +172,17 @@ async function main() {
       }
 
       await db.from('fabric_images').delete().eq('fabric_id', fabricId).eq('storage_path', storagePath);
+      const { count: primaries } = await db
+        .from('fabric_images')
+        .select('id', { count: 'exact', head: true })
+        .eq('fabric_id', fabricId)
+        .eq('is_primary', true);
       const { error: imageError } = await db.from('fabric_images').insert({
         fabric_id: fabricId,
         storage_path: storagePath,
         public_url: publicUrl,
         image_type: 'hanger',
-        is_primary: true,
+        is_primary: !primaries, // first image stays the cover; later shots join the gallery
       });
       if (imageError) throw imageError;
 
@@ -233,7 +194,11 @@ async function main() {
     }
   }
 
-  console.log(`\nDone. ${ok} inserted/updated, ${failed} failed.`);
+  console.log(
+    `\nDone. ${ok} inserted/updated, ${failed} failed` +
+      (preserved ? `, ${preserved} left untouched (already reviewed)` : '') +
+      '.',
+  );
 }
 
 main();

@@ -10,6 +10,7 @@ import { FabricSearchBar } from '@/components/search/FabricSearchBar';
 import { MillSection } from '@/components/mills/MillSection';
 import { FabricGrid } from '@/components/fabrics/FabricGrid';
 import { TechnicalLabel } from '@/components/ui/TechnicalLabel';
+import { Arrow } from '@/components/ui/Arrow';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +47,7 @@ export default async function HomePage() {
           </div>
           {canReview && pending.total > 0 && (
             <Link href="/review" className="btn-technical btn-technical--thread mt-10">
-              {pending.total} {pending.total === 1 ? 'record' : 'records'} awaiting review →
+              {pending.total} {pending.total === 1 ? 'record' : 'records'} awaiting review <Arrow />
             </Link>
           )}
         </div>
@@ -84,7 +85,7 @@ export default async function HomePage() {
         <div className="flex items-baseline justify-between border-b-2 border-ink pb-3">
           <h2 className="font-display text-3xl tracking-display text-ink">Recently added</h2>
           <Link href="/fabrics" className="t-label hover:text-ink">
-            View all →
+            View all <Arrow />
           </Link>
         </div>
         <div className="mt-10">

@@ -12,7 +12,7 @@ export function FabricHero({ fabric }: { fabric: FabricWithRelations }) {
         {primary?.public_url ? (
           <Image
             src={primary.public_url}
-            alt={fabric.fabric_name ?? fabric.fabric_code}
+            alt={fabric.fabric_name ?? fabric.fabric_code ?? "Fabric"}
             fill
             priority
             sizes="(max-width: 768px) 100vw, 55vw"

@@ -52,7 +52,7 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
                       src={image.public_url}
                       alt={`${fabric.fabric_code} — ${image.image_type}`}
                       fill
-                      sizes="15vw"
+                      sizes="(max-width: 768px) 22vw, 15vw"
                       className="object-cover"
                     />
                   )}
@@ -66,7 +66,7 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
         <div>
           <div className="flex items-center gap-3">
             <span className="font-mono text-xs uppercase tracking-label text-stone">
-              {fabric.fabric_code}
+              {fabric.fabric_code ?? "No code"}
             </span>
             {isStaff && <StatusBadge status={fabric.review_status} />}
             {isStaff && fabric.extraction_confidence != null && (

@@ -22,7 +22,14 @@ const EDITABLE_FIELDS = [
 
 type EditableField = (typeof EDITABLE_FIELDS)[number][0];
 
-function ReviewRow({ fabric, onResolved }: { fabric: FabricWithRelations; onResolved: (id: string) => void }) {
+function ReviewRow({
+  fabric, codeSuggestion, onResolved,
+}: {
+  fabric: FabricWithRelations;
+  /** The code a fresh AI re-read of the label found, when it disagrees with the stored one. */
+  codeSuggestion?: string;
+  onResolved: (id: string) => void;
+}) {
   const [edits, setEdits] = useState<Partial<Record<EditableField, string>>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -58,7 +65,7 @@ function ReviewRow({ fabric, onResolved }: { fabric: FabricWithRelations; onReso
       <div>
         <div className="relative aspect-[4/5] overflow-hidden bg-linen">
           {image?.public_url && (
-            <Image src={image.public_url} alt={fabric.fabric_code} fill sizes="200px" className="object-cover" />
+            <Image src={image.public_url} alt={fabric.fabric_code ?? "Fabric"} fill sizes="(max-width: 768px) 90vw, 200px" className="object-cover" />
           )}
         </div>
         <div className="mt-3 flex items-center justify-between">
@@ -70,15 +77,27 @@ function ReviewRow({ fabric, onResolved }: { fabric: FabricWithRelations; onReso
       </div>
 
       <div>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
           {EDITABLE_FIELDS.map(([field, label]) => (
             <label key={field} className="flex flex-col gap-1">
               <span className="font-mono text-[10px] uppercase tracking-label text-stone">{label}</span>
               <input
-                defaultValue={(fabric[field] as string | number | null) ?? ''}
+                value={edits[field] ?? (fabric[field] as string | number | null) ?? ''}
                 onChange={(e) => setEdits((prev) => ({ ...prev, [field]: e.target.value }))}
-                className="border border-seam bg-paper px-2 py-1.5 text-sm text-ink focus:border-ink focus:outline-none"
+                className="tap-target border border-seam bg-paper px-2 py-1.5 text-sm text-ink focus:border-ink focus:outline-none"
               />
+              {field === 'fabric_code' && codeSuggestion && edits.fabric_code !== codeSuggestion && (
+                <span className="text-xs text-review">
+                  Label reads <span className="font-mono">{codeSuggestion}</span>{' '}
+                  <button
+                    type="button"
+                    onClick={() => setEdits((prev) => ({ ...prev, fabric_code: codeSuggestion }))}
+                    className="underline underline-offset-2 hover:text-ink"
+                  >
+                    use this
+                  </button>
+                </span>
+              )}
             </label>
           ))}
         </div>
@@ -89,21 +108,21 @@ function ReviewRow({ fabric, onResolved }: { fabric: FabricWithRelations; onReso
           <button
             disabled={busy !== null}
             onClick={() => call(`/api/review-queue/${fabric.id}/approve`, 'PATCH', corrections)}
-            className="border border-approve px-4 py-2 font-mono text-[11px] uppercase tracking-label text-approve hover:bg-approve hover:text-paper disabled:opacity-50"
+            className="tap-target border border-approve px-4 py-2 font-mono text-[11px] uppercase tracking-label text-approve hover:bg-approve hover:text-paper disabled:opacity-50"
           >
             {busy?.includes('approve') ? 'Approving…' : 'Approve'}
           </button>
           <button
             disabled={busy !== null}
             onClick={() => call(`/api/review-queue/${fabric.id}/rerun`, 'POST')}
-            className="border border-ink px-4 py-2 font-mono text-[11px] uppercase tracking-label text-ink hover:bg-ink hover:text-paper disabled:opacity-50"
+            className="tap-target border border-ink px-4 py-2 font-mono text-[11px] uppercase tracking-label text-ink hover:bg-ink hover:text-paper disabled:opacity-50"
           >
             {busy?.includes('rerun') ? 'Re-reading…' : 'Re-run AI'}
           </button>
           <button
             disabled={busy !== null}
             onClick={() => call(`/api/review-queue/${fabric.id}/reject`, 'PATCH')}
-            className="border border-reject px-4 py-2 font-mono text-[11px] uppercase tracking-label text-reject hover:bg-reject hover:text-paper disabled:opacity-50"
+            className="tap-target border border-reject px-4 py-2 font-mono text-[11px] uppercase tracking-label text-reject hover:bg-reject hover:text-paper disabled:opacity-50"
           >
             Reject
           </button>
@@ -113,7 +132,12 @@ function ReviewRow({ fabric, onResolved }: { fabric: FabricWithRelations; onReso
   );
 }
 
-export function ReviewQueueTable({ initialItems }: { initialItems: FabricWithRelations[] }) {
+export function ReviewQueueTable({
+  initialItems, codeSuggestions = {},
+}: {
+  initialItems: FabricWithRelations[];
+  codeSuggestions?: Record<string, string>;
+}) {
   const [items, setItems] = useState(initialItems);
 
   if (items.length === 0) {
@@ -126,6 +150,7 @@ export function ReviewQueueTable({ initialItems }: { initialItems: FabricWithRel
         <ReviewRow
           key={fabric.id}
           fabric={fabric}
+          codeSuggestion={codeSuggestions[fabric.id]}
           onResolved={(id) => setItems((prev) => prev.filter((f) => f.id !== id))}
         />
       ))}
