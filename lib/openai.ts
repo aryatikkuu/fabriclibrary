@@ -53,3 +53,24 @@ export async function openAiChatJson(options: {
     throw new ExtractionError('OpenAI response was not valid JSON');
   }
 }
+
+/**
+ * Text embeddings (unit length, so cosine similarity = dot product).
+ * Used by photo search to compare descriptions (features/look-search).
+ */
+export async function openAiEmbed(texts: string[], model: string): Promise<number[][]> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new ExtractionError('OPENAI_API_KEY is not configured');
+
+  const response = await fetch('https://api.openai.com/v1/embeddings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ model, input: texts }),
+  });
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new ExtractionError(`OpenAI embedding failed (${response.status}): ${body.slice(0, 300)}`);
+  }
+  const data = await response.json();
+  return (data.data as { embedding: number[] }[]).map((d) => d.embedding);
+}

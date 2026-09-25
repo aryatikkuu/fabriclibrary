@@ -46,4 +46,12 @@ export const lookSearch = {
   minScore: 0.3,
   /** End-use tags offered to the AI: those on at least this many fabrics. */
   minUseTagCount: 20,
+  /**
+   * Weight of description similarity against the tag score (migration 0008):
+   * score = (tags + w · cosine) / (1 + w). 0.5 won the benchmark in
+   * reports/embedding-benchmark.json; 0 turns it off.
+   */
+  embeddingWeight: 0.5,
+  /** Library and search must use the same model — change both via `npm run embed -- --all`. */
+  embeddingModel: 'text-embedding-3-small',
 } as const;

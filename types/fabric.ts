@@ -83,6 +83,8 @@ export interface FabricSearchParams {
   sort?: 'newest' | 'gsm_asc' | 'gsm_desc' | 'code';
   /** Photo search tags ("pattern:floral", "use:shirts"); when set, results are ranked by look and q/sort are ignored. */
   look?: string[];
+  /** Photo search only: embedding of the AI's description of the photo, blended into the ranking. */
+  lookEmbedding?: number[];
   page?: number;
   pageSize?: number;
 }

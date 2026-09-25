@@ -24,7 +24,10 @@ export function loadEnv() {
   }
 }
 
-/** Every public table, parents before children (backup.mjs dumps, restore.mjs replays in this order). */
+/**
+ * Every public table, parents before children (backup.mjs dumps, restore.mjs replays in this order).
+ * fabric_embeddings is left out on purpose: it is derived data, rebuilt by `npm run embed`.
+ */
 export const TABLES = [
   'mills',
   'profiles',
@@ -54,12 +57,15 @@ export function adminClient() {
   return createClient(url, serviceKey, { auth: { persistSession: false } });
 }
 
-/** Every row of a table. Supabase caps a select at 1,000 rows, so page through. */
-export async function selectAll(db, table, columns = '*') {
+/**
+ * Every row of a table. Supabase caps a select at 1,000 rows, so page through
+ * (ordered by a unique column so pages don't overlap; pass orderBy for tables keyed on something else).
+ */
+export async function selectAll(db, table, columns = '*', orderBy = 'id') {
   const PAGE = 1000;
   const rows = [];
   for (let from = 0; ; from += PAGE) {
-    const { data, error } = await db.from(table).select(columns).order('id').range(from, from + PAGE - 1);
+    const { data, error } = await db.from(table).select(columns).order(orderBy).range(from, from + PAGE - 1);
     if (error) throw new Error(`${table}: ${error.message}`);
     rows.push(...data);
     if (data.length < PAGE) return rows;

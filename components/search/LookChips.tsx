@@ -5,7 +5,9 @@ import { formatLook, lookLabel, parseLook } from '@/features/look-search/look-ta
 
 /**
  * What the AI saw in the buyer's photo, as removable chips. Removing one only
- * changes the URL, so the library is re-ranked with no new AI call.
+ * changes the URL, so the library is re-ranked with no new AI call. It also
+ * drops the description: that still describes the whole photo (e.g. "navy …"
+ * after navy was removed), so from then on the search ranks by tags alone.
  */
 export function LookChips() {
   const router = useRouter();
@@ -17,7 +19,8 @@ export function LookChips() {
   function update(next: string[]) {
     const params = new URLSearchParams(searchParams.toString());
     if (next.length) params.set('look', formatLook(next));
-    else { params.delete('look'); params.delete('lookNote'); }
+    else params.delete('look');
+    params.delete('lookNote');
     params.delete('page');
     router.push(`/search?${params.toString()}`);
   }

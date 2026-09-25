@@ -79,8 +79,9 @@ export class FabricRepository {
   }
 
   /**
-   * Photo search: the database ranks every fabric against the tags in one
-   * query (match_fabrics_by_look, migration 0006), then only the page being
+   * Photo search: the database ranks every fabric against the tags — and,
+   * when given, the description embedding — in one query
+   * (match_fabrics_by_look, migrations 0006/0008), then only the page being
    * shown is loaded with its images.
    */
   private async searchByLook(
@@ -99,6 +100,8 @@ export class FabricRepository {
       p_review_status: params.reviewStatus ?? null,
       p_limit: pageSize,
       p_offset: (page - 1) * pageSize,
+      query_embedding: params.lookEmbedding ? JSON.stringify(params.lookEmbedding) : null,
+      embedding_weight: params.lookEmbedding ? lookSearch.embeddingWeight : 0,
     });
     if (error) throw error;
     const rows = (ranked ?? []) as { fabric_id: string; score: number; total: number }[];

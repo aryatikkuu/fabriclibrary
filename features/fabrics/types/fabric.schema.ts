@@ -33,6 +33,7 @@ export const fabricSearchSchema = z.object({
   reviewStatus: z.enum(['approved', 'needs_review', 'rejected']).optional(),
   sort: z.enum(['newest', 'gsm_asc', 'gsm_desc', 'code']).optional(),
   look: z.string().max(1000).optional().transform((v) => (v ? parseLook(v) : undefined)),
+  lookNote: z.string().max(200).optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(24),
 });

@@ -4,6 +4,7 @@ import { buildServices } from '@/lib/container';
 import { fabricSearchSchema } from '@/features/fabrics/types/fabric.schema';
 import { getCurrentProfile } from '@/lib/api-helpers';
 import { roleCan } from '@/lib/config/roles.config';
+import { embedLookNote } from '@/features/look-search/embed-look';
 import { EditorialLayout } from '@/components/layout/EditorialLayout';
 import { PremiumPageHeader } from '@/components/ui/PremiumPageHeader';
 import { FabricSearchBar } from '@/components/search/FabricSearchBar';
@@ -26,9 +27,15 @@ export default async function SearchPage({
   const isStaff = roleCan(profile?.role, 'review.read');
 
   const parsed = fabricSearchSchema.parse(searchParams);
+  // Photo search is for signed-in users; only they trigger the (tiny) embedding
+  // call, so a crafted URL can't run up API use for visitors.
+  const lookEmbedding = profile && parsed.look?.length && parsed.lookNote
+    ? await embedLookNote(parsed.lookNote)
+    : undefined;
   const [fabrics, mills] = await Promise.all([
     services.fabricService.search({
       ...parsed,
+      lookEmbedding,
       reviewStatus: parsed.reviewStatus ?? (isStaff ? undefined : 'approved'),
     }),
     services.millService.list(),
