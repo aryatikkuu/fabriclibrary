@@ -49,16 +49,16 @@ export default async function SearchPage({
         description={`By fabric code, name, fibre, weight, colour, use or mill${profile ? ' — or by photo' : ''}.`}
       />
 
-      <div className="mt-10 max-w-2xl">
+      {/* Search on the left, filters in the space beside it; stacked on small screens. */}
+      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,42rem)_minmax(0,1fr)] lg:items-start lg:gap-12">
+        <div>
+          <Suspense>
+            <FabricSearchBar photoSearch={!!profile} />
+            <LookChips />
+          </Suspense>
+        </div>
         <Suspense>
-          <FabricSearchBar photoSearch={!!profile} />
-          <LookChips />
-        </Suspense>
-      </div>
-
-      <div className="mt-8">
-        <Suspense>
-          <FabricFilters mills={mills.map((m) => ({ name: m.name, slug: m.slug }))} />
+          <FabricFilters layout="column" mills={mills.map((m) => ({ name: m.name, slug: m.slug }))} />
         </Suspense>
       </div>
 

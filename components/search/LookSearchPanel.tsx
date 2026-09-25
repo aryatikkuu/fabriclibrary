@@ -83,20 +83,20 @@ export function LookSearchPanel({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    // A drawer hanging off the search bar: same frame, one tone darker, no second box.
+    // A drawer hanging off the search bar: same frame and background, no second box.
     <form
       onSubmit={submit}
       onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
       onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false); }}
       onDrop={(e) => { e.preventDefault(); setDragging(false); choose(e.dataTransfer.files?.[0]); }}
-      className="flex gap-4 border-x border-b border-ink bg-linen p-4 sm:gap-5 sm:p-5"
+      className="flex gap-4 border-x border-b border-ink bg-paper p-4 sm:gap-5 sm:p-5"
     >
       <button
         type="button"
         onClick={() => fileInput.current?.click()}
         aria-label={preview ? 'Change photo' : 'Choose a photo'}
-        className={`group relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden border bg-paper transition-colors sm:h-32 sm:w-32 ${
-          dragging ? 'border-ink' : preview ? 'border-seam hover:border-ink' : 'border-dashed border-stone hover:border-ink'
+        className={`group relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden border transition-colors sm:h-32 sm:w-32 ${
+          dragging ? 'border-ink bg-linen' : preview ? 'border-seam hover:border-ink' : 'border-dashed border-seam hover:border-ink'
         }`}
       >
         {preview ? (
@@ -108,12 +108,8 @@ export function LookSearchPanel({ onClose }: { onClose: () => void }) {
             </span>
           </>
         ) : (
-          <span className="flex flex-col items-center gap-2 text-stone group-hover:text-ink">
-            <svg viewBox="0 0 20 20" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.25">
-              <path d="M2.5 6.5 H6 L7.5 4.5 H12.5 L14 6.5 H17.5 V15.5 H2.5 Z" strokeLinejoin="round" />
-              <circle cx="10" cy="10.75" r="3" />
-            </svg>
-            <span className="font-mono text-[9.5px] uppercase tracking-label">{dragging ? 'Drop it' : 'Add photo'}</span>
+          <span className="font-mono text-[10px] uppercase tracking-label text-stone group-hover:text-ink">
+            {dragging ? 'Drop it' : '+ Add photo'}
           </span>
         )}
       </button>
