@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { appConfig } from '@/lib/config/app.config';
 import { getCurrentProfile } from '@/lib/api-helpers';
 import { roleCan } from '@/lib/config/roles.config';
-import { primaryNav, signInNav, type NavItem } from '@/lib/config/nav.config';
+import { primaryNav, signInNav, signOutNav, type NavItem } from '@/lib/config/nav.config';
 import { NavLink } from './NavLink';
 import { MobileNav } from './MobileNav';
 
@@ -19,7 +19,7 @@ export async function SiteHeader() {
 
   const items: NavItem[] = [
     ...primaryNav.filter((item) => !item.permission || roleCan(profile?.role, item.permission)),
-    ...(profile ? [] : [signInNav]),
+    profile ? signOutNav : signInNav,
   ];
 
   return (

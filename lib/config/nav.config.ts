@@ -14,6 +14,8 @@ export interface NavItem {
   permission?: keyof typeof rolePermissions;
   /** Renders in the accent colour — reserved for staff-only destinations. */
   accent?: boolean;
+  /** 'post' renders a form button instead of a link, for actions such as signing out. */
+  method?: 'post';
 }
 
 export const primaryNav: readonly NavItem[] = [
@@ -24,3 +26,6 @@ export const primaryNav: readonly NavItem[] = [
 
 /** Shown only when nobody is signed in. */
 export const signInNav: NavItem = { href: '/login', label: 'Sign in' };
+
+/** Shown only when someone is signed in. */
+export const signOutNav: NavItem = { href: '/api/auth/sign-out', label: 'Sign out', method: 'post' };

@@ -12,9 +12,12 @@ import { LookSearchPanel } from './LookSearchPanel';
  */
 export function FabricSearchBar({
   placeholder = 'Search by code, name, composition, colour…',
+  shortPlaceholder = 'Code, name, colour…',
   photoSearch = false,
 }: {
   placeholder?: string;
+  /** Shown on phones, where the full placeholder would be cut off. */
+  shortPlaceholder?: string;
   photoSearch?: boolean;
 }) {
   const router = useRouter();
@@ -22,6 +25,7 @@ export function FabricSearchBar({
   const [value, setValue] = useState(searchParams.get('q') ?? '');
   const [photoOpen, setPhotoOpen] = useState(false);
   const textInput = useRef<HTMLInputElement>(null);
+  const narrow = useNarrowScreen();
 
   const wasPhotoOpen = useRef(false);
 
@@ -57,7 +61,7 @@ export function FabricSearchBar({
         <div className="flex min-w-0 flex-1 flex-col justify-center">
           <Reveal show={!photoOpen}>
             <form onSubmit={submit} className="flex items-stretch">
-              <span aria-hidden className="flex items-center pl-5 text-stone">
+              <span aria-hidden className="hidden items-center pl-5 text-stone sm:flex">
                 {/* flat magnifier */}
                 <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <circle cx="8.5" cy="8.5" r="5.5" />
@@ -68,13 +72,14 @@ export function FabricSearchBar({
                 ref={textInput}
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                placeholder={placeholder}
+                placeholder={narrow ? shortPlaceholder : placeholder}
                 aria-label="Search fabrics"
-                className="w-full min-w-0 bg-transparent px-4 py-5 font-display text-xl text-ink placeholder:text-stone focus:outline-none md:text-2xl"
+                enterKeyHint="search"
+                className="w-full min-w-0 bg-transparent px-3 py-5 font-display text-lg text-ink placeholder:text-stone focus:outline-none sm:px-4 sm:text-xl md:text-2xl"
               />
               <button
                 type="submit"
-                className="border-l border-ink px-7 font-mono text-[10.5px] uppercase tracking-label text-ink transition-colors hover:bg-ink hover:text-paper"
+                className="border-l border-ink px-4 font-mono text-[10.5px] uppercase tracking-label text-ink transition-colors hover:bg-ink hover:text-paper sm:px-7"
               >
                 Search
               </button>
@@ -107,6 +112,19 @@ export function FabricSearchBar({
       </div>
     </div>
   );
+}
+
+/** True below Tailwind's `sm` breakpoint (640 px). False during server render. */
+function useNarrowScreen() {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 639px)');
+    const update = () => setNarrow(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  return narrow;
 }
 
 /**

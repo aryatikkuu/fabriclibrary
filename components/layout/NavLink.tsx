@@ -8,6 +8,8 @@ import type { NavItem } from '@/lib/config/nav.config';
  *
  *  · `bar`    — inline, tracked mono, underline-on-hover (desktop masthead)
  *  · `drawer` — full-width row with a comfortable touch target (mobile menu)
+ *
+ * Items with method 'post' (sign out) render as a form button that looks the same.
  */
 export function NavLink({
   item,
@@ -24,6 +26,17 @@ export function NavLink({
     variant === 'bar'
       ? `border-b border-transparent pb-0.5 transition-colors hover:border-thread hover:text-ink ${tone ?? ''}`
       : `tap-target flex items-center border-b border-seam text-base transition-colors hover:text-ink ${tone ?? 'text-graphite'}`;
+
+  if (item.method === 'post') {
+    return (
+      <form action={item.href} method="post" className={variant === 'drawer' ? 'contents' : undefined}>
+        {/* Buttons don't inherit the nav's uppercase the way links do. */}
+        <button type="submit" className={`${className} uppercase ${variant === 'drawer' ? 'w-full text-left' : ''}`.trim()}>
+          {item.label}
+        </button>
+      </form>
+    );
+  }
 
   return (
     <Link href={item.href} onClick={onNavigate} className={className.trim()}>

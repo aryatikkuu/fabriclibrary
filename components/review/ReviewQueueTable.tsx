@@ -84,7 +84,7 @@ function ReviewRow({
               <input
                 value={edits[field] ?? (fabric[field] as string | number | null) ?? ''}
                 onChange={(e) => setEdits((prev) => ({ ...prev, [field]: e.target.value }))}
-                className="tap-target border border-seam bg-paper px-2 py-1.5 text-sm text-ink focus:border-ink focus:outline-none"
+                className="tap-target border border-seam bg-paper px-2 py-1.5 text-base text-ink focus:border-ink focus:outline-none sm:text-sm"
               />
               {field === 'fabric_code' && codeSuggestion && edits.fabric_code !== codeSuggestion && (
                 <span className="text-xs text-review">
