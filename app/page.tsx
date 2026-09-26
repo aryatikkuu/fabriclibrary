@@ -33,12 +33,14 @@ export default async function HomePage() {
   return (
     <EditorialLayout>
       {/* Hero — photo search: the words on the left, a square photo card on the right */}
-      <section className="grid items-center gap-12 border-b border-seam pb-20 pt-16 md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:gap-16 md:pt-24">
+      <section className="grid items-center gap-12 border-b border-seam pb-20 pt-16 md:grid-cols-[minmax(0,1fr)_20rem] md:gap-12 md:pt-24 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16 xl:grid-cols-[minmax(0,1fr)_26rem]">
         <div className="selvedge">
           <TechnicalLabel crosshair>
             Mill archive · {totalFabrics} {totalFabrics === 1 ? 'quality' : 'qualities'} indexed
           </TechnicalLabel>
-          <h1 className="display-hero mt-6">Upload a photo, find your fabric.</h1>
+          <h1 className="display-hero mt-6">
+            Upload a photo,<br className="hidden lg:block" /> find your fabric.
+          </h1>
           <p className="mt-8 max-w-md text-base leading-relaxed text-graphite">
             Photograph a hanger, a garment or a swatch — we&rsquo;ll match it against {totalFabrics} qualities
             from {mills.length} mills.
@@ -53,7 +55,7 @@ export default async function HomePage() {
           )}
         </div>
 
-        <div className="mx-auto w-full max-w-md md:mx-0 md:justify-self-end">
+        <div className="w-full">
           <Suspense>
             <HeroPhotoCard />
           </Suspense>
