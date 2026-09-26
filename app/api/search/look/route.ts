@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
-import { handleApiError, requirePermission, requireRateLimit } from '@/lib/api-helpers';
+import { getCurrentProfile, handleApiError, requireRateLimit } from '@/lib/api-helpers';
 import { ValidationError } from '@/lib/errors';
 import { readLook } from '@/features/look-search/read-look';
+import { embedLookDescription } from '@/features/look-search/embed-look';
+import { claimLookSearch, saveLookResult } from '@/features/look-search/look-quota';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,15 +16,16 @@ const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 let useTagCache: { tags: string[]; at: number } | null = null;
 
 /**
- * POST /api/search/look — signed-in users only (each call costs ~0.1–0.2¢).
+ * POST /api/search/look — open to everyone, within daily limits (each call
+ * costs ~0.14¢; limits in lookSearch.limits, enforced by claim_look_search).
  * Multipart fields: image (optional), note (optional, "for summer shirts").
- * Returns { look, description }; the search page ranks fabrics from `look`.
+ * Returns { look, description, lookId }; the search page ranks fabrics from
+ * `look` plus the description embedding stored under `lookId`.
  * The photo is only forwarded to OpenAI — never stored.
  */
 export async function POST(request: NextRequest) {
   try {
-    await requirePermission('fabrics.read');
-    requireRateLimit(request);
+    requireRateLimit(request); // bursts; the daily limits are claimed below
 
     const form = await request.formData();
     const image = form.get('image');
@@ -36,12 +39,17 @@ export async function POST(request: NextRequest) {
     }
     if (!imageDataUrl && !note) throw new ValidationError('Add a photo or describe what you need');
 
+    // Reserve a search before spending anything; throws 429 when over a limit.
+    const lookId = await claimLookSearch(request, await getCurrentProfile());
+
     if (!useTagCache || Date.now() - useTagCache.at > 3_600_000) {
       const { repositories } = buildServices(await createClient());
       useTagCache = { tags: await repositories.fabricRepository.popularUseTags(), at: Date.now() };
     }
 
-    return NextResponse.json(await readLook({ imageDataUrl, note, useTags: useTagCache.tags }));
+    const { look, description } = await readLook({ imageDataUrl, note, useTags: useTagCache.tags });
+    await saveLookResult(lookId, { look, description, embedding: await embedLookDescription(description) });
+    return NextResponse.json({ look, description, lookId });
   } catch (error) {
     return handleApiError(error);
   }

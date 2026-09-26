@@ -6,9 +6,9 @@ import { LookSearchPanel } from './LookSearchPanel';
 
 /**
  * Statement search: a full-width technical frame with crosshair corners,
- * serif input at display scale, mono action. With `photoSearch` (signed-in
- * users), a camera button on the frame's edge swaps the text search for
- * search-by-photo in the same frame, and back.
+ * serif input at display scale, mono action. With `photoSearch`, a camera
+ * button on the frame's edge swaps the text search for search-by-photo in
+ * the same frame, and back.
  */
 export function FabricSearchBar({
   placeholder = 'Search by code, name, composition, colour…',
@@ -41,7 +41,7 @@ export function FabricSearchBar({
     if (value.trim()) params.set('q', value.trim());
     else params.delete('q');
     params.delete('look'); // a text search replaces any photo search
-    params.delete('lookNote');
+    params.delete('lookId');
     params.delete('page');
     router.push(`/search?${params.toString()}`);
   }

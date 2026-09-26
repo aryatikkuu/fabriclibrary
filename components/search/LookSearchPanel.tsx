@@ -71,7 +71,8 @@ export function LookSearchPanel({ active, onClose }: { active: boolean; onClose:
 
       const params = new URLSearchParams(searchParams.toString());
       params.set('look', formatLook(body.look));
-      if (body.description) params.set('lookNote', body.description);
+      if (body.lookId) params.set('lookId', body.lookId);
+      else params.delete('lookId');
       params.delete('q');
       params.delete('page');
       router.push(`/search?${params.toString()}`);

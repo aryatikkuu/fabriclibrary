@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
-import { fabricSearchSchema } from '@/features/fabrics/types/fabric.schema';
+import { parseSearchPageParams } from '@/features/fabrics/types/fabric.schema';
 import { NotFoundError } from '@/lib/errors';
 import { EditorialLayout } from '@/components/layout/EditorialLayout';
 import { PremiumPageHeader } from '@/components/ui/PremiumPageHeader';
@@ -29,7 +29,7 @@ export default async function MillPage({
     throw error;
   }
 
-  const parsed = fabricSearchSchema.parse(searchParams);
+  const parsed = parseSearchPageParams(searchParams);
   const fabrics = await services.fabricService.searchByMill(params.slug, {
     ...parsed,
     reviewStatus: parsed.reviewStatus ?? 'approved',

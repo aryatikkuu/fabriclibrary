@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
-import { fabricSearchSchema } from '@/features/fabrics/types/fabric.schema';
+import { parseSearchPageParams } from '@/features/fabrics/types/fabric.schema';
 import { getCurrentProfile } from '@/lib/api-helpers';
 import { roleCan } from '@/lib/config/roles.config';
 import { EditorialLayout } from '@/components/layout/EditorialLayout';
@@ -22,7 +22,7 @@ export default async function FabricsPage({
   const profile = await getCurrentProfile();
   const isStaff = roleCan(profile?.role, 'review.read');
 
-  const parsed = fabricSearchSchema.parse(searchParams);
+  const parsed = parseSearchPageParams(searchParams);
   const fabrics = await services.fabricService.search({
     ...parsed,
     // Staff see everything (including needs_review); visitors see approved only.

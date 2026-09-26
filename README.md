@@ -83,7 +83,7 @@ of keeping copies. Needs Node 22.6+.
 
 `backups/` is git-ignored — it contains user profiles and audit logs.
 
-**Photo search** (Search tab, signed-in users): a photo and/or a note ("for summer shirts") is turned into the same tags by one AI call (`app/api/search/look`, ~0.1¢), and the database ranks the library against them (`match_fabrics_by_look`, migration 0006). Tag lists and ranking weights live in `lib/config/visual-tags.config.ts`.
+**Photo search** (Search tab, open to everyone): a photo and/or a note ("for summer shirts") is turned into the same tags by one AI call (`app/api/search/look`, ~0.14¢), and the database ranks the library against them plus the description embedding (`match_fabrics_by_look`, migrations 0006/0008). Daily limits per visitor, per signed-in user and for all non-admins together are enforced in the database (`look_searches`, migration 0009); admins are unlimited. Tag lists, ranking weights and limits live in `lib/config/visual-tags.config.ts`.
 
 ## Documentation
 

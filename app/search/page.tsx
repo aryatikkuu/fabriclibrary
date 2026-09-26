@@ -1,10 +1,10 @@
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
-import { fabricSearchSchema } from '@/features/fabrics/types/fabric.schema';
+import { parseSearchPageParams } from '@/features/fabrics/types/fabric.schema';
 import { getCurrentProfile } from '@/lib/api-helpers';
 import { roleCan } from '@/lib/config/roles.config';
-import { embedLookNote } from '@/features/look-search/embed-look';
+import { storedLook } from '@/features/look-search/look-quota';
 import { EditorialLayout } from '@/components/layout/EditorialLayout';
 import { PremiumPageHeader } from '@/components/ui/PremiumPageHeader';
 import { FabricSearchBar } from '@/components/search/FabricSearchBar';
@@ -26,16 +26,14 @@ export default async function SearchPage({
   const profile = await getCurrentProfile();
   const isStaff = roleCan(profile?.role, 'review.read');
 
-  const parsed = fabricSearchSchema.parse(searchParams);
-  // Photo search is for signed-in users; only they trigger the (tiny) embedding
-  // call, so a crafted URL can't run up API use for visitors.
-  const lookEmbedding = profile && parsed.look?.length && parsed.lookNote
-    ? await embedLookNote(parsed.lookNote)
-    : undefined;
+  const parsed = parseSearchPageParams(searchParams);
+  // Description and embedding were stored when the photo was read; the page
+  // only reads them, so no URL can make this page call the AI or show made-up text.
+  const stored = parsed.look?.length && parsed.lookId ? await storedLook(parsed.lookId) : {};
   const [fabrics, mills] = await Promise.all([
     services.fabricService.search({
       ...parsed,
-      lookEmbedding,
+      lookEmbedding: stored.embedding,
       reviewStatus: parsed.reviewStatus ?? (isStaff ? undefined : 'approved'),
     }),
     services.millService.list(),
@@ -46,7 +44,7 @@ export default async function SearchPage({
       <PremiumPageHeader
         eyebrow="Find a quality"
         title="Search the archive"
-        description={`By fabric code, name, fibre, weight, colour, use or mill${profile ? ' — or by photo' : ''}.`}
+        description="By fabric code, name, fibre, weight, colour, use or mill — or by photo."
       />
 
       {/* Filters sit below the search; while the photo drawer is open they move into
@@ -55,8 +53,8 @@ export default async function SearchPage({
       <div data-photo-area className="mt-10 grid gap-8 lg:photo-open:grid-cols-[minmax(0,42rem)_minmax(0,1fr)] lg:photo-open:gap-12">
         <div className="flex max-w-2xl flex-col">
           <Suspense>
-            <FabricSearchBar photoSearch={!!profile} />
-            <LookChips />
+            <FabricSearchBar photoSearch />
+            <LookChips note={stored.description} />
           </Suspense>
         </div>
         <Suspense>

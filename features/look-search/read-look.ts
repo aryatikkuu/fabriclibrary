@@ -39,6 +39,9 @@ export async function readLook(options: {
 
   return {
     look: [...new Set([...visual, ...use])].filter(isLookTag),
-    description: typeof out.description === 'string' ? out.description.slice(0, 200) : '',
+    // Plain single line: no control characters, no markup, capped.
+    description: typeof out.description === 'string'
+      ? out.description.replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200)
+      : '',
   };
 }

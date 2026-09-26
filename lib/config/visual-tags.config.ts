@@ -64,4 +64,14 @@ export const lookSearch = {
   embeddingWeight: 0.5,
   /** Library and search must use the same model — change both via `npm run embed -- --all`. */
   embeddingModel: 'text-embedding-3-small',
+  /**
+   * Photo searches allowed per rolling 24 hours (migration 0009). Each costs
+   * about 0.14¢, so `allNonAdmin` is the most photo search can cost a day
+   * (300 ≈ $0.42). Admins are unlimited. Enforced in the database, not here.
+   */
+  limits: {
+    perVisitor: 10,
+    perUser: 30,
+    allNonAdmin: 300,
+  },
 } as const;

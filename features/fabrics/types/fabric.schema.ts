@@ -33,10 +33,23 @@ export const fabricSearchSchema = z.object({
   reviewStatus: z.enum(['approved', 'needs_review', 'rejected']).optional(),
   sort: z.enum(['newest', 'gsm_asc', 'gsm_desc', 'code']).optional(),
   look: z.string().max(1000).optional().transform((v) => (v ? parseLook(v) : undefined)),
-  lookNote: z.string().max(200).optional(),
+  /** A stored photo search (look_searches) — supplies the description embedding. */
+  lookId: z.string().uuid().optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(24),
 });
+
+/**
+ * For pages: parse the URL's search params, dropping any value that doesn't
+ * validate (e.g. ?gsmMin=abc, ?page=-5, a malformed lookId) instead of
+ * failing the whole page. API routes keep the strict parse and return 400.
+ */
+export function parseSearchPageParams(raw: Record<string, string | string[] | undefined>) {
+  const result = fabricSearchSchema.safeParse(raw);
+  if (result.success) return result.data;
+  const invalid = new Set(result.error.issues.map((issue) => String(issue.path[0])));
+  return fabricSearchSchema.parse(Object.fromEntries(Object.entries(raw).filter(([key]) => !invalid.has(key))));
+}
 
 export type FabricCreateInput = z.infer<typeof fabricCreateSchema>;
 export type FabricUpdateInput = z.infer<typeof fabricUpdateSchema>;
