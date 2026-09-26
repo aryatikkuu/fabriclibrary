@@ -15,19 +15,16 @@ export function FabricSearchBar({
   placeholder = 'Search by code, name, composition, colour…',
   shortPlaceholder = 'Code, name, colour…',
   photoSearch = false,
-  startWithPhoto = false,
 }: {
   placeholder?: string;
   /** Shown on phones, where the full placeholder would be cut off. */
   shortPlaceholder?: string;
   photoSearch?: boolean;
-  /** Open in photo mode (homepage hero); the camera still switches to text. */
-  startWithPhoto?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(searchParams.get('q') ?? '');
-  const [photoOpen, setPhotoOpen] = useState(photoSearch && startWithPhoto);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const textInput = useRef<HTMLInputElement>(null);
   const narrow = useNarrowScreen();
 

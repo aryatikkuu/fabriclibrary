@@ -5,7 +5,7 @@ import { buildServices } from '@/lib/container';
 import { getCurrentProfile } from '@/lib/api-helpers';
 import { roleCan } from '@/lib/config/roles.config';
 import { EditorialLayout } from '@/components/layout/EditorialLayout';
-import { FabricSearchBar } from '@/components/search/FabricSearchBar';
+import { HeroPhotoCard } from '@/components/search/HeroPhotoCard';
 import { MillSection } from '@/components/mills/MillSection';
 import { FabricGrid } from '@/components/fabrics/FabricGrid';
 import { TechnicalLabel } from '@/components/ui/TechnicalLabel';
@@ -32,52 +32,32 @@ export default async function HomePage() {
 
   return (
     <EditorialLayout>
-      {/* Hero — poster-scale title against an index column */}
-      <section className="grid gap-12 border-b border-seam pb-20 pt-20 md:grid-cols-[1fr_220px] md:gap-16 md:pt-28">
+      {/* Hero — photo search: the words on the left, a square photo card on the right */}
+      <section className="grid items-center gap-12 border-b border-seam pb-20 pt-16 md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:gap-16 md:pt-24">
         <div className="selvedge">
           <TechnicalLabel crosshair>
             Mill archive · {totalFabrics} {totalFabrics === 1 ? 'quality' : 'qualities'} indexed
           </TechnicalLabel>
-          <h1 className="display-hero mt-6 max-w-4xl">Upload a photo, find your fabric.</h1>
-          <p className="mt-8 max-w-xl text-base leading-relaxed text-graphite">
+          <h1 className="display-hero mt-6">Upload a photo, find your fabric.</h1>
+          <p className="mt-8 max-w-md text-base leading-relaxed text-graphite">
             Photograph a hanger, a garment or a swatch — we&rsquo;ll match it against {totalFabrics} qualities
-            from {mills.length} mills. Prefer typing? Tap the camera button to search by code, name or colour.
+            from {mills.length} mills.
           </p>
-          <div className="mt-14 max-w-2xl">
-            <Suspense>
-              <FabricSearchBar photoSearch startWithPhoto />
-            </Suspense>
-          </div>
+          <Link href="/search" className="t-label mt-8 inline-flex items-center gap-2 hover:text-ink">
+            Know the code? Search by code, name or colour <Arrow />
+          </Link>
           {canReview && pending.total > 0 && (
-            <Link href="/review" className="btn-technical btn-technical--thread mt-10">
+            <Link href="/review" className="btn-technical btn-technical--thread mt-10 flex w-fit">
               {pending.total} {pending.total === 1 ? 'record' : 'records'} awaiting review <Arrow />
             </Link>
           )}
         </div>
 
-        {/* Index column — vertical hairline, archive figures */}
-        <aside className="hidden border-l border-seam pl-8 md:block">
-          <dl className="space-y-10">
-            <div>
-              <dt className="t-label">Mills</dt>
-              <dd className="mt-2 font-display text-4xl tracking-display text-ink">
-                {String(mills.length).padStart(2, '0')}
-              </dd>
-            </div>
-            <div>
-              <dt className="t-label">Qualities</dt>
-              <dd className="mt-2 font-display text-4xl tracking-display text-ink">
-                {String(totalFabrics).padStart(2, '0')}
-              </dd>
-            </div>
-            <div>
-              <dt className="t-label">Index</dt>
-              <dd className="mt-2 font-mono text-[10.5px] uppercase tracking-label text-stone">
-                Photographed · read · searchable
-              </dd>
-            </div>
-          </dl>
-        </aside>
+        <div className="mx-auto w-full max-w-md md:mx-0 md:justify-self-end">
+          <Suspense>
+            <HeroPhotoCard />
+          </Suspense>
+        </div>
       </section>
 
       {/* Mills */}
