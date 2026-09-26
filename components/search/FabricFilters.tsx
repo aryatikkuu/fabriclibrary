@@ -5,8 +5,11 @@ import { searchConfig } from '@/lib/config/search.config';
 
 interface FilterOption { value: string; label: string }
 
-/** One height for selects and number inputs, so every filter row lines up. */
-const FIELD = 'h-9 border border-seam bg-paper px-2 text-sm text-ink focus:border-ink focus:outline-none';
+/**
+ * One height for selects and number inputs, so every filter row lines up.
+ * 16 px text on phones: iPhone Safari zooms into any smaller field when tapped.
+ */
+const FIELD = 'h-9 border border-seam bg-paper px-2 text-base text-ink focus:border-ink focus:outline-none sm:text-sm';
 
 function Select({
   name, label, options, value, onChange, className = '',
@@ -85,7 +88,7 @@ export function FabricFilters({
     <div className={LAYOUTS[layout]}>
       <Select name="millSlug" label="Mill" value={searchParams.get('millSlug') ?? ''}
         options={mills.map((m) => ({ value: m.slug, label: m.name }))} onChange={setParam}
-        className={layout === 'beside' ? 'lg:photo-open:col-span-2' : ''} />
+        className={`col-span-2 lg:col-span-1 ${layout === 'beside' ? 'lg:photo-open:col-span-2' : ''}`} />
       <Select name="fabricType" label="Fabric type" value={searchParams.get('fabricType') ?? ''}
         options={toOptions(searchConfig.fabricTypes)} onChange={setParam} />
       <Select name="colorFamily" label="Colour" value={searchParams.get('colorFamily') ?? ''}
