@@ -86,7 +86,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ image_base64: $json.image_base64, mime_type: $json.mime_type, file_name: $json.file_name }) }}",
+        "jsonBody": "={{ JSON.stringify({ image_base64: $json.image_base64, filename: $json.file_name }) }}",
         "options": {
           "timeout": 120000,
           "response": { "response": { "neverError": false } }

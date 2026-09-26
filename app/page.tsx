@@ -11,6 +11,7 @@ import { MillSection } from '@/components/mills/MillSection';
 import { FabricGrid } from '@/components/fabrics/FabricGrid';
 import { TechnicalLabel } from '@/components/ui/TechnicalLabel';
 import { Arrow } from '@/components/ui/Arrow';
+import { SectionHeading } from '@/components/ui/SectionHeading';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,12 +83,10 @@ export default async function HomePage() {
 
       {/* Recently added */}
       <section className="mt-24">
-        <div className="flex items-baseline justify-between border-b-2 border-ink pb-3">
-          <h2 className="font-display text-3xl tracking-display text-ink">Recently added</h2>
-          <Link href="/fabrics" className="t-label hover:text-ink">
-            View all <Arrow />
-          </Link>
-        </div>
+        <SectionHeading
+          title="Recently added"
+          aside={<Link href="/fabrics" className="t-label hover:text-ink">View all <Arrow /></Link>}
+        />
         <div className="mt-10">
           <FabricGrid fabrics={recent.items} emptyHint="Run the seed script or upload a hanger photo to begin." />
         </div>
@@ -96,10 +95,7 @@ export default async function HomePage() {
       {/* Featured */}
       {featured.items.length > 0 && (
         <section className="mt-24">
-          <div className="flex items-baseline justify-between border-b-2 border-ink pb-3">
-            <h2 className="font-display text-3xl tracking-display text-ink">From the archive</h2>
-            <TechnicalLabel>Selected qualities</TechnicalLabel>
-          </div>
+          <SectionHeading title="From the archive" aside={<TechnicalLabel>Selected qualities</TechnicalLabel>} />
           <div className="mt-10">
             <FabricGrid fabrics={featured.items} />
           </div>

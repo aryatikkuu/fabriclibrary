@@ -24,17 +24,12 @@
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import sharp from 'sharp';
-import { adminClient, mapPool, selectAll, STORAGE_BUCKET } from './lib/common.mjs';
+import { adminClient, chunks, flag, hasFlag, mapPool, selectAll } from './lib/common.mjs';
+import { askVision, cleanTags, loadPhoto } from './lib/vision.mjs';
 import { visualTags } from '../lib/config/visual-tags.config.ts';
 import { buildRetagPrompt } from '../features/ai-extraction/prompts/fabric-tags.prompt.ts';
 
-const flag = (name, fallback) => {
-  const i = process.argv.indexOf(`--${name}`);
-  return i === -1 ? fallback : process.argv[i + 1];
-};
 const MODEL = 'gpt-5.4-mini'; // must match LOOK_MODEL in features/look-search/read-look.ts
-const PRICE = [0.75, 4.5]; // USD per 1M tokens (input, output)
 const SAMPLE = Number(flag('sample', 0));
 const BUDGET = Number(flag('budget', 1));
 const REPORT = flag('report', 'reports/retag-looks.json');
@@ -54,44 +49,16 @@ function groupTags(rows) {
 
 const allTags = (groups) => groups.flatMap((g) => visualTags[g].map((v) => `${g}:${v}`));
 
-function cleanTags(tags) {
-  return Object.fromEntries(Object.entries(visualTags).map(([group, allowed]) =>
-    [group, [...new Set((Array.isArray(tags?.[group]) ? tags[group] : []).filter((v) => allowed.includes(v)))]]));
-}
-
 async function tag(image) {
-  const { data, error } = await db.storage.from(STORAGE_BUCKET()).download(image.storage_path);
-  if (error) throw new Error(`download ${image.storage_path}: ${error.message}`);
-  const jpeg = await sharp(Buffer.from(await data.arrayBuffer())).rotate()
-    .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-    body: JSON.stringify({
-      model: MODEL,
-      max_completion_tokens: 1500,
-      response_format: { type: 'json_object' },
-      messages: [{ role: 'user', content: [
-        { type: 'text', text: PROMPT },
-        { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${jpeg.toString('base64')}`, detail: 'high' } },
-      ] }],
-    }),
-  });
-  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const body = await res.json();
-  const cost = ((body.usage?.prompt_tokens ?? 0) * PRICE[0] + (body.usage?.completion_tokens ?? 0) * PRICE[1]) / 1e6;
-  try {
-    const out = JSON.parse(body.choices?.[0]?.message?.content ?? '');
-    return { cost, tags: cleanTags(out.tags), multi_fabric: Boolean(out.multi_fabric) };
-  } catch {
-    return { cost, error: 'unparseable response' };
-  }
+  const jpeg = await loadPhoto(db, image.storage_path, { maxSide: 1024, quality: 85 });
+  const { cost, out, error } = await askVision({ model: MODEL, prompt: PROMPT, jpeg, maxTokens: 1500 });
+  return error ? { cost, error } : { cost, tags: cleanTags(out.tags).kept, multi_fabric: Boolean(out.multi_fabric) };
 }
 
 async function main() {
   if (!existsSync('reports')) mkdirSync('reports');
   const report = existsSync(REPORT) ? JSON.parse(readFileSync(REPORT, 'utf8')) : { model: MODEL, spend_usd: 0, fabrics: {} };
-  if (process.argv.includes('--save')) return save(report, process.argv.includes('--apply'));
+  if (hasFlag('save')) return save(report, hasFlag('apply'));
 
   const [fabrics, images, tags, verify] = await Promise.all([
     selectAll(db, 'fabrics', 'id, fabric_code, fabric_name, fabric_type, composition, ai_description, description'),
@@ -117,7 +84,7 @@ async function main() {
     for (const [id, v] of Object.entries(verify)) if (v.multi_fabric) affected.add(id);
   }
 
-  let todo = fabrics.filter((f) => photoOf.has(f.id) && !report.fabrics[f.id] && (process.argv.includes('--all') || affected.has(f.id)));
+  let todo = fabrics.filter((f) => photoOf.has(f.id) && !report.fabrics[f.id] && (hasFlag('all') || affected.has(f.id)));
   if (SAMPLE) todo = todo.filter((_, i) => i % Math.max(1, Math.floor(todo.length / SAMPLE)) === 0).slice(0, SAMPLE);
   console.log(`${todo.length} fabrics to re-tag; spent so far $${report.spend_usd.toFixed(3)} (cap $${BUDGET})`);
 
@@ -154,7 +121,7 @@ async function save(report, apply) {
 
   // Plain-tagged fabrics the re-read sees as patterned.
   let fixes = [];
-  if (process.argv.includes('--fix-plain')) {
+  if (hasFlag('fix-plain')) {
     const tagsOf = groupTags(await selectAll(db, 'fabric_tags', 'fabric_id, tag', 'fabric_id'));
     fixes = rows.filter((r) => {
       const patterns = (tagsOf.get(r.fabric_id) ?? []).filter((t) => t.startsWith('pattern:'));
@@ -168,18 +135,16 @@ async function save(report, apply) {
   }
   if (!apply) return console.log('Dry run — nothing written. Take a backup (npm run backup), then re-run with --save --apply.');
 
-  const chunks0 = (arr, n) => Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => arr.slice(i * n, i * n + n));
-  for (const ids of chunks0(fixes.map((r) => r.fabric_id), 200)) {
+  for (const ids of chunks(fixes.map((r) => r.fabric_id), 200)) {
     const { error } = await db.from('fabric_tags').delete().in('fabric_id', ids).in('tag', allTags(FIX_GROUPS));
     if (error) throw new Error(`clear plain tags: ${error.message}`);
   }
   const fixRows = fixes.flatMap((r) => toRows(r, FIX_GROUPS.filter((g) => !groups.includes(g))));
-  for (const batch of chunks0(fixRows, 500)) {
+  for (const batch of chunks(fixRows, 500)) {
     const { error } = await db.from('fabric_tags').upsert(batch, { onConflict: 'fabric_id,tag', ignoreDuplicates: true });
     if (error) throw new Error(`plain fixes: ${error.message}`);
   }
 
-  const chunks = (arr, n) => Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => arr.slice(i * n, i * n + n));
   for (const ids of chunks(rows.map((r) => r.fabric_id), 200)) {
     const { error } = await db.from('fabric_tags').delete().in('fabric_id', ids).in('tag', allTags(groups));
     if (error) throw new Error(`clear tags: ${error.message}`);

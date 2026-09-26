@@ -158,14 +158,6 @@ export class FabricRepository {
     return count ?? 0;
   }
 
-  async countAll(reviewStatus?: string): Promise<number> {
-    let query = this.db.from('fabrics').select('id', { count: 'exact', head: true });
-    if (reviewStatus) query = query.eq('review_status', reviewStatus);
-    const { count, error } = await query;
-    if (error) throw error;
-    return count ?? 0;
-  }
-
   /** Candidate pool for similarity scoring: same type OR overlapping GSM window. */
   async findSimilarityCandidates(fabric: Fabric, limit = 200): Promise<Fabric[]> {
     const filters: string[] = [];

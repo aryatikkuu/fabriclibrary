@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { appConfig } from '@/lib/config/app.config';
 
+const FIELD = 'border-b-2 border-seam bg-transparent py-2 font-display text-lg text-ink focus:border-ink focus:outline-none';
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -48,7 +50,7 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
-            className="border-b-2 border-seam bg-transparent py-2 font-display text-lg text-ink focus:border-ink focus:outline-none"
+            className={FIELD}
           />
         </label>
 
@@ -60,7 +62,7 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="current-password"
-            className="border-b-2 border-seam bg-transparent py-2 font-display text-lg text-ink focus:border-ink focus:outline-none"
+            className={FIELD}
           />
         </label>
 

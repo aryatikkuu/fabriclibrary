@@ -38,21 +38,15 @@
  */
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import sharp from 'sharp';
-import { adminClient, editDistance, mapPool, selectAll, STORAGE_BUCKET } from './lib/common.mjs';
+import { adminClient, chunks, editDistance, flag, hasFlag, mapPool, selectAll } from './lib/common.mjs';
+import { PRICES, askVision, cleanTags, loadPhoto } from './lib/vision.mjs';
 import { visualTags } from '../lib/config/visual-tags.config.ts';
 import { buildFabricVerifyPrompt } from '../features/ai-extraction/prompts/fabric-verify.prompt.ts';
 
-const flag = (name, fallback) => {
-  const i = process.argv.indexOf(`--${name}`);
-  return i === -1 ? fallback : process.argv[i + 1];
-};
 const MODEL = flag('model', 'gpt-5.4-mini');
 const SAMPLE = Number(flag('sample', 0));
 const STATUS = flag('status', '');
 const BUDGET = Number(flag('budget', 1));
-/** USD per 1M tokens (input, output) — standard tier. */
-const PRICES = { 'gpt-5.4': [2.5, 15], 'gpt-5.4-mini': [0.75, 4.5], 'gpt-5.4-nano': [0.2, 1.25] };
 if (!PRICES[MODEL]) throw new Error(`Unknown model ${MODEL}; add its price to PRICES`);
 
 const db = adminClient();
@@ -87,49 +81,12 @@ function compare(field, stored, read, label = {}) {
   return same() ? 'match' : 'differs';
 }
 
-/** Keep only vocabulary words; report anything the model invented. */
-function cleanTags(tags) {
-  const kept = {};
-  const dropped = [];
-  for (const [group, allowed] of Object.entries(visualTags)) {
-    const values = Array.isArray(tags?.[group]) ? tags[group] : [];
-    kept[group] = values.filter((v) => allowed.includes(v));
-    dropped.push(...values.filter((v) => !allowed.includes(v)).map((v) => `${group}:${v}`));
-  }
-  return { kept, dropped };
-}
-
 // ---------- API ----------
 
 async function analyse(fabric, image) {
-  const { data, error } = await db.storage.from(STORAGE_BUCKET()).download(image.storage_path);
-  if (error) throw new Error(`download ${image.storage_path}: ${error.message}`);
-  const jpeg = await sharp(Buffer.from(await data.arrayBuffer())).rotate().jpeg({ quality: 90 }).toBuffer();
-
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-    body: JSON.stringify({
-      model: MODEL,
-      max_completion_tokens: 3000,
-      response_format: { type: 'json_object' },
-      messages: [{ role: 'user', content: [
-        { type: 'text', text: PROMPT },
-        { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${jpeg.toString('base64')}`, detail: 'high' } },
-      ] }],
-    }),
-  });
-  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const body = await res.json();
-  const [pin, pout] = PRICES[MODEL];
-  const cost = ((body.usage?.prompt_tokens ?? 0) * pin + (body.usage?.completion_tokens ?? 0) * pout) / 1e6;
-
-  let out;
-  try {
-    out = JSON.parse(body.choices?.[0]?.message?.content ?? '');
-  } catch {
-    return { cost, error: 'unparseable response' };
-  }
+  const jpeg = await loadPhoto(db, image.storage_path);
+  const { cost, out, error } = await askVision({ model: MODEL, prompt: PROMPT, jpeg, maxTokens: 3000 });
+  if (error) return { cost, error };
   const label = out.label ?? {};
   const checks = Object.fromEntries(
     ['fabric_code', 'fabric_name', 'composition', 'gsm', 'width', 'color'].map((f) => [f, compare(f, fabric[f], label[f], label)]),
@@ -174,9 +131,9 @@ function sample(list, n) {
 }
 
 async function main() {
-  if (process.argv.includes('--save')) {
+  if (hasFlag('save')) {
     if (!existsSync(REPORT)) throw new Error(`No report at ${REPORT}`);
-    return save(JSON.parse(readFileSync(REPORT, 'utf8')), process.argv.includes('--apply'), process.argv.includes('--fix-codes'));
+    return save(JSON.parse(readFileSync(REPORT, 'utf8')), hasFlag('apply'), hasFlag('fix-codes'));
   }
   const [fabrics, images, mills] = await Promise.all([
     selectAll(db, 'fabrics', 'id, mill_id, review_status, fabric_code, fabric_name, composition, gsm, width, color'),
@@ -261,7 +218,6 @@ async function save(report, apply, fixCodes) {
     return;
   }
 
-  const chunks = (arr, n) => Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => arr.slice(i * n, i * n + n));
   for (const ids of chunks(rows.map((r) => r.fabric_id), 200)) {
     const { error } = await db.from('fabric_tags').delete().in('fabric_id', ids).like('tag', '%:%');
     if (error) throw new Error(`clear visual tags: ${error.message}`);

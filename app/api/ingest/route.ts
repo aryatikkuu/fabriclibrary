@@ -4,11 +4,11 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { buildServices } from '@/lib/container';
 import { handleApiError, verifyWebhookSecret } from '@/lib/api-helpers';
 import { UnauthorizedError } from '@/lib/errors';
+import { MAX_IMAGE_BYTES, decodeBase64Image } from '@/lib/images';
 
 const ingestSchema = z.object({
   filename: z.string().min(1),
-  image_base64: z.string().min(50),
-  mime_type: z.string().default('image/jpeg'),
+  image_base64: z.string().min(50).max(Math.ceil(MAX_IMAGE_BYTES * 1.4)),
   /** Optional override if the operator already knows the mill. */
   mill_slug: z.string().optional(),
 });
@@ -23,6 +23,8 @@ export async function POST(request: NextRequest) {
     if (!verifyWebhookSecret(request)) throw new UnauthorizedError('Invalid webhook secret');
 
     const body = ingestSchema.parse(await request.json());
+    // Check the image before paying for extraction; its real type is used from here on.
+    const image = decodeBase64Image(body.image_base64);
     const db = createAdminClient();
     const {
       extractionService,
@@ -35,7 +37,7 @@ export async function POST(request: NextRequest) {
     // 1. AI extraction.
     let outcome;
     try {
-      outcome = await extractionService.extractFromBase64(body.image_base64, body.mime_type);
+      outcome = await extractionService.extractFromBase64(image.bytes.toString('base64'), image.type);
     } catch (error) {
       await extractionLogRepository.insert({
         source_image_path: body.filename,
@@ -67,10 +69,7 @@ export async function POST(request: NextRequest) {
 
     // 3. Upload image to Storage.
     const fabricCode = r.fabric_code || `UNCODED-${Date.now()}`;
-    const buffer = Buffer.from(body.image_base64.replace(/^data:[^,]+,/, ''), 'base64');
-    const uploaded = await storageService.uploadImage(
-      mill.slug, fabricCode, body.filename, buffer, body.mime_type,
-    );
+    const uploaded = await storageService.uploadImage(mill.slug, fabricCode, body.filename, image.bytes, image.type);
 
     // 4. Save fabric record (upsert on mill + code).
     const existing = await fabricRepository.findByCode(fabricCode);

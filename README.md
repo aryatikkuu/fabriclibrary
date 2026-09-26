@@ -100,17 +100,28 @@ of keeping copies. Needs Node 22.6+.
 | [ADDING_NEW_MILL](docs/ADDING_NEW_MILL.md) | Add a mill in minutes — no code changes |
 | [ADDING_NEW_FIELDS](docs/ADDING_NEW_FIELDS.md) | Add a fabric attribute end-to-end |
 | [BRANDING_GUIDE](docs/BRANDING_GUIDE.md) | Palette, type, voice — how to re-skin |
-| [VISUAL_SEARCH_PLAN](docs/VISUAL_SEARCH_PLAN.md) | Design of record for image search (planned, not built) |
+| [VISUAL_SEARCH_PLAN](docs/VISUAL_SEARCH_PLAN.md) | Original design notes for photo search (now built: tags + description embeddings — see below) |
 
 ## Roles
 
 | Permission | Admin | Editor | Viewer / Public |
 |---|---|---|---|
 | Browse approved fabrics | ✅ | ✅ | ✅ |
+| Photo search | ✅ unlimited | ✅ 30/day | ✅ 30/day signed in, 10/day visitor |
 | Create / edit fabrics | ✅ | ✅ | — |
 | Review queue (approve / reject / re-run AI) | ✅ | ✅ | — |
 | Delete fabrics | ✅ | — | — |
 | Manage mills & users | ✅ | — | — |
+
+## Security
+
+- **Access rules live in the database (RLS)**, migrations 0002 and 0010: visitors and viewers see approved fabrics only — and only those fabrics' images, tags and similarity links; staff write; only admins delete or change roles (a trigger blocks anyone else changing `profiles.role`). Every API route re-checks its permission (`requirePermission`) or the n8n secret (`verifyWebhookSecret`, constant-time).
+- **Photo search limits** are enforced in one locked database step before any AI call (`claim_look_search`, migrations 0009/0010): 5 a minute and a daily limit per visitor/user, one daily ceiling for everyone but admins, 30-day retention. Visitors are identified by the platform's IP only (spoofable headers are ignored), stored hashed.
+- **Uploads** (`lib/images.ts`): only JPEG, PNG and WebP, recognised from the file's bytes rather than its claimed type, with a size cap; storage paths are built from sanitised segments only (`lib/config/storage.config.ts`).
+- **AI output is untrusted**: tags must come from the fixed vocabulary, the description is cleaned to one plain line, and the customer's note is passed as quoted data, never instructions. Results pages read a search's description and embedding from the database by id, so a crafted URL can't trigger an AI call or show made-up text.
+- **Security headers** on every response (`next.config.mjs`): a Content-Security-Policy allowing only this site and Supabase, no framing, `nosniff`, HSTS, strict referrer and permissions policies.
+- **Secrets** (`SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `N8N_WEBHOOK_SECRET`) are server-only; nothing secret uses the `NEXT_PUBLIC_` prefix.
+- Tests: `tests/unit/security.test.ts`. Accounts are created by an admin — keep "Allow new users to sign up" off in Supabase.
 
 ## Key conventions
 

@@ -23,8 +23,9 @@ function clientKey(request: NextRequest, profile: Profile | null): string {
 
 /**
  * Reserve one photo search before calling the AI, or throw 429.
- * The database checks and records it in one locked step, so parallel
- * requests can't exceed a limit and failed calls still count.
+ * The database checks (5 a minute, the daily per-client limit, the shared
+ * daily ceiling) and records it in one locked step, so parallel requests
+ * can't exceed a limit and failed calls still count.
  */
 export async function claimLookSearch(request: NextRequest, profile: Profile | null): Promise<string> {
   const isAdmin = profile?.role === 'admin';
@@ -39,7 +40,9 @@ export async function claimLookSearch(request: NextRequest, profile: Profile | n
   const row = (data as { id: string | null; limit_hit: string | null }[])[0];
   if (row?.id) return row.id;
   throw new AppError(
-    row?.limit_hit === 'global'
+    row?.limit_hit === 'burst'
+      ? 'Too many photo searches in a row. Please wait a minute.'
+      : row?.limit_hit === 'global'
       ? 'Photo search has reached its daily limit. Please try again tomorrow.'
       : profile
         ? `You've used your ${lookSearch.limits.perUser} photo searches for today. Please try again tomorrow.`

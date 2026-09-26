@@ -32,9 +32,9 @@
  */
 
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { adminClient, editDistance, selectAll } from './lib/common.mjs';
+import { adminClient, chunks, editDistance, hasFlag, selectAll } from './lib/common.mjs';
 
-const apply = process.argv.includes('--apply');
+const apply = hasFlag('apply');
 const db = adminClient();
 
 const CORE = ['fabric_name', 'fabric_type', 'composition', 'gsm', 'width', 'color', 'color_family', 'season', 'suggested_use', 'description'];
@@ -204,16 +204,15 @@ async function main() {
       if (i > 0 && im.is_primary) clearPrimary.push(im.id);
     });
   }
-  const chunks = (arr) => Array.from({ length: Math.ceil(arr.length / 200) }, (_, i) => arr.slice(i * 200, i * 200 + 200));
-  for (const c of chunks([...dropIds])) {
+  for (const c of chunks([...dropIds], 200)) {
     const { error } = await db.from('fabric_images').delete().in('id', c);
     if (error) throw new Error(`drop images: ${error.message}`);
   }
-  for (const c of chunks(clearPrimary)) {
+  for (const c of chunks(clearPrimary, 200)) {
     const { error } = await db.from('fabric_images').update({ is_primary: false }).in('id', c);
     if (error) throw new Error(`clear primary: ${error.message}`);
   }
-  for (const c of chunks(setPrimary)) {
+  for (const c of chunks(setPrimary, 200)) {
     const { error } = await db.from('fabric_images').update({ is_primary: true }).in('id', c);
     if (error) throw new Error(`set primary: ${error.message}`);
   }

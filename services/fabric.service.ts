@@ -24,10 +24,6 @@ export class FabricService {
     return this.fabrics.findById(id);
   }
 
-  getByCode(code: string): Promise<FabricWithRelations | null> {
-    return this.fabrics.findByCode(code);
-  }
-
   search(params: FabricSearchParams): Promise<Paginated<FabricWithRelations>> {
     return this.fabrics.search(params);
   }

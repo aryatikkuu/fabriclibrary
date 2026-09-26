@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
-import { getCurrentProfile, handleApiError, requireRateLimit } from '@/lib/api-helpers';
+import { getCurrentProfile, handleApiError } from '@/lib/api-helpers';
 import { ValidationError } from '@/lib/errors';
+import { validateImage } from '@/lib/images';
 import { readLook } from '@/features/look-search/read-look';
 import { embedLookDescription } from '@/features/look-search/embed-look';
 import { claimLookSearch, saveLookResult } from '@/features/look-search/look-quota';
 
 export const dynamic = 'force-dynamic';
 
-const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // the browser shrinks photos to ~200 KB first
-const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024; // the browser shrinks photos to ~200 KB first
 
 /** End-use tags change only when the library is re-tagged; refresh hourly. */
 let useTagCache: { tags: string[]; at: number } | null = null;
@@ -25,21 +25,19 @@ let useTagCache: { tags: string[]; at: number } | null = null;
  */
 export async function POST(request: NextRequest) {
   try {
-    requireRateLimit(request); // bursts; the daily limits are claimed below
-
     const form = await request.formData();
     const image = form.get('image');
     const note = String(form.get('note') ?? '').trim().slice(0, 200);
 
     let imageDataUrl: string | null = null;
     if (image instanceof File && image.size > 0) {
-      if (!IMAGE_TYPES.includes(image.type)) throw new ValidationError('Use a JPEG, PNG or WebP photo');
-      if (image.size > MAX_IMAGE_BYTES) throw new ValidationError('Photo is too large (max 4 MB)');
-      imageDataUrl = `data:${image.type};base64,${Buffer.from(await image.arrayBuffer()).toString('base64')}`;
+      const bytes = Buffer.from(await image.arrayBuffer());
+      imageDataUrl = `data:${validateImage(bytes, MAX_PHOTO_BYTES)};base64,${bytes.toString('base64')}`;
     }
     if (!imageDataUrl && !note) throw new ValidationError('Add a photo or describe what you need');
 
-    // Reserve a search before spending anything; throws 429 when over a limit.
+    // Reserve a search before spending anything; throws 429 when over a limit
+    // (bursts, per visitor/user, or all visitors together — see claim_look_search).
     const lookId = await claimLookSearch(request, await getCurrentProfile());
 
     if (!useTagCache || Date.now() - useTagCache.at > 3_600_000) {

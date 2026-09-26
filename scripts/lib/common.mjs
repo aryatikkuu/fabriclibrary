@@ -10,6 +10,19 @@ import { readFileSync, existsSync } from 'node:fs';
 import { resolve, extname } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
 
+/** Value after `--name` on the command line, or `fallback`. */
+export function flag(name, fallback) {
+  const i = process.argv.indexOf(`--${name}`);
+  return i === -1 ? fallback : process.argv[i + 1];
+}
+
+/** Whether `--name` was passed. */
+export const hasFlag = (name) => process.argv.includes(`--${name}`);
+
+/** Split `arr` into batches of `size` (for .in() filters and bulk inserts). */
+export const chunks = (arr, size) =>
+  Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
+
 /** Load .env.local / .env without overriding variables already set. */
 export function loadEnv() {
   for (const file of ['.env.local', '.env']) {

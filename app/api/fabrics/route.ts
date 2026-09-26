@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
-import { handleApiError, requirePermission, requireRateLimit } from '@/lib/api-helpers';
+import { handleApiError, requirePermission } from '@/lib/api-helpers';
 import { fabricSearchSchema, fabricCreateSchema } from '@/features/fabrics/types/fabric.schema';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
 /** POST /api/fabrics — create a fabric (admin/editor). */
 export async function POST(request: NextRequest) {
   try {
-    requireRateLimit(request);
     const profile = await requirePermission('fabrics.create');
     const body = fabricCreateSchema.parse(await request.json());
     const { fabricService, similarityService } = buildServices(await createClient());

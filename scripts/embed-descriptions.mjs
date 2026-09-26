@@ -10,12 +10,11 @@
  * about 0.2¢. Stops if a run would exceed --budget USD (default 0.10).
  */
 
-import { adminClient, selectAll } from './lib/common.mjs';
+import { adminClient, flag, hasFlag, selectAll } from './lib/common.mjs';
 import { lookSearch } from '../lib/config/visual-tags.config.ts';
 
-const all = process.argv.includes('--all');
-const i = process.argv.indexOf('--budget');
-const BUDGET = i === -1 ? 0.1 : Number(process.argv[i + 1]);
+const all = hasFlag('all');
+const BUDGET = Number(flag('budget', 0.1));
 const PRICE_PER_M = { 'text-embedding-3-small': 0.02, 'text-embedding-3-large': 0.13 }[lookSearch.embeddingModel];
 if (PRICE_PER_M == null) throw new Error(`Add the price of ${lookSearch.embeddingModel} to embed-descriptions.mjs`);
 const BATCH = 500;

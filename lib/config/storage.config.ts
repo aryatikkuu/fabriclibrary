@@ -6,11 +6,12 @@
  */
 export const storagePaths = {
   fabricImage: (millSlug: string, fabricCode: string, filename: string) =>
-    `mills/${millSlug}/fabrics/${sanitize(fabricCode)}/images/${sanitize(filename)}`,
+    `mills/${sanitize(millSlug)}/fabrics/${sanitize(fabricCode)}/images/${sanitize(filename)}`,
   fabricDocument: (millSlug: string, fabricCode: string, filename: string) =>
-    `mills/${millSlug}/fabrics/${sanitize(fabricCode)}/documents/${sanitize(filename)}`,
+    `mills/${sanitize(millSlug)}/fabrics/${sanitize(fabricCode)}/documents/${sanitize(filename)}`,
 };
 
+/** One safe path segment: no slashes, dots or spaces at the ends, so no "../". */
 export function sanitize(segment: string): string {
   return segment
     .trim()
