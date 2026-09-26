@@ -5,12 +5,6 @@ import { searchConfig } from '@/lib/config/search.config';
 
 interface FilterOption { value: string; label: string }
 
-/**
- * One height for selects and number inputs, so every filter row lines up.
- * 16 px text on phones: iPhone Safari zooms into any smaller field when tapped.
- */
-const FIELD = 'h-9 border border-seam bg-paper px-2 text-base text-ink focus:border-ink focus:outline-none sm:text-sm';
-
 function Select({
   name, label, options, value, onChange, className = '',
 }: {
@@ -19,11 +13,11 @@ function Select({
 }) {
   return (
     <label className={`flex flex-col gap-1 ${className}`}>
-      <span className="font-mono text-[10px] uppercase tracking-label text-stone">{label}</span>
+      <span className="field-label">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
-        className={FIELD}
+        className="field"
       >
         <option value="">All</option>
         {options.map((o) => (
@@ -42,9 +36,9 @@ function NumberField({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="font-mono text-[10px] uppercase tracking-label text-stone">{label}</span>
+      <span className="field-label">{label}</span>
       <input type="number" defaultValue={value} min={searchConfig.gsm.min} max={searchConfig.gsm.max}
-        onBlur={(e) => onChange(name, e.target.value)} className={FIELD} />
+        onBlur={(e) => onChange(name, e.target.value)} className="field" />
     </label>
   );
 }

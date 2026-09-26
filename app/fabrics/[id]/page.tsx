@@ -6,10 +6,12 @@ import { getCurrentProfile } from '@/lib/api-helpers';
 import { roleCan } from '@/lib/config/roles.config';
 import { NotFoundError } from '@/lib/errors';
 import { formatDate } from '@/utils/format';
+import { recordFabricView } from '@/features/analytics/fabric-views';
 import { EditorialLayout } from '@/components/layout/EditorialLayout';
 import { FabricHero } from '@/components/fabrics/FabricHero';
 import { FabricTechnicalData } from '@/components/fabrics/FabricTechnicalData';
 import { SimilarFabrics } from '@/components/fabrics/SimilarFabrics';
+import { RequestSwatches } from '@/components/fabrics/RequestSwatches';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ConfidenceBadge } from '@/components/ui/ConfidenceBadge';
 
@@ -33,6 +35,7 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
     services.similarityService.getTopSimilar(fabric.id),
     db.from('fabric_documents').select('*').eq('fabric_id', fabric.id).then(({ data }) => data ?? []),
     isStaff ? services.repositories.extractionLogRepository.findByFabricId(fabric.id) : Promise.resolve([]),
+    recordFabricView(fabric.id, isStaff),
   ]);
 
   const galleryImages = (fabric.images ?? []).filter((image) => !image.is_primary);
@@ -92,6 +95,10 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
             </div>
           )}
 
+          <RequestSwatches
+            fabric={{ id: fabric.id, code: fabric.fabric_code, name: fabric.fabric_name, mill: fabric.mill?.name ?? null }}
+          />
+
           <div className="mt-10">
             <FabricTechnicalData fabric={fabric} />
           </div>
@@ -111,7 +118,7 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
                     >
                       {doc.document_name}
                     </a>
-                    <span className="font-mono text-[10px] uppercase tracking-label text-stone">
+                    <span className="field-label">
                       {doc.document_type}
                     </span>
                   </li>

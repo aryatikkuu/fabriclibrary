@@ -80,7 +80,7 @@ function ReviewRow({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
           {EDITABLE_FIELDS.map(([field, label]) => (
             <label key={field} className="flex flex-col gap-1">
-              <span className="font-mono text-[10px] uppercase tracking-label text-stone">{label}</span>
+              <span className="field-label">{label}</span>
               <input
                 value={edits[field] ?? (fabric[field] as string | number | null) ?? ''}
                 onChange={(e) => setEdits((prev) => ({ ...prev, [field]: e.target.value }))}

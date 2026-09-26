@@ -43,7 +43,7 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="mt-10 flex flex-col gap-6">
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] uppercase tracking-label text-stone">Email</span>
+          <span className="field-label">Email</span>
           <input
             type="email"
             value={email}
@@ -55,7 +55,7 @@ export default function LoginPage() {
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] uppercase tracking-label text-stone">Password</span>
+          <span className="field-label">Password</span>
           <input
             type="password"
             value={password}

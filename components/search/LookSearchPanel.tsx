@@ -127,7 +127,7 @@ export function LookSearchPanel({ active, onClose }: { active: boolean; onClose:
           maxLength={200}
           aria-label="What is it for? (optional)"
           placeholder="What is it for? (optional)"
-          className="w-full border border-seam bg-paper px-3 py-2 text-base text-ink placeholder:text-stone focus:border-ink focus:outline-none sm:text-sm"
+          className="field h-10 px-3"
         />
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <button

@@ -22,6 +22,7 @@ export const primaryNav: readonly NavItem[] = [
   { href: '/fabrics', label: 'Fabrics' },
   { href: '/search', label: 'Search' },
   { href: '/review', label: 'Review', permission: 'review.read', accent: true },
+  { href: '/analytics', label: 'Analytics', permission: 'analytics.read', accent: true },
 ] as const;
 
 /** Shown only when nobody is signed in. */

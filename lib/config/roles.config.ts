@@ -13,6 +13,7 @@ export const rolePermissions: Record<string, UserRole[]> = {
   'mills.manage': ['admin'],
   'users.manage': ['admin'],
   'audit.read': ['admin'],
+  'analytics.read': ['admin'],
 };
 
 export function roleCan(role: UserRole | null | undefined, permission: keyof typeof rolePermissions): boolean {

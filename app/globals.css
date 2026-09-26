@@ -102,6 +102,16 @@
     @apply font-mono text-[10.5px] uppercase tracking-label text-stone;
   }
 
+  /* Form fields (filters, photo-search note, swatch requests). 16 px text on
+     phones: iPhone Safari zooms into any smaller field when it's tapped. */
+  .field {
+    @apply h-9 w-full border border-seam bg-paper px-2 text-base text-ink
+           placeholder:text-stone focus:border-ink focus:outline-none sm:text-sm;
+  }
+  .field-label {
+    @apply font-mono text-[10px] uppercase tracking-label text-stone;
+  }
+
   /* Comfortable touch target (>=44px) on pointer-coarse devices only, so the
      desktop masthead and toolbars keep their compact editorial rhythm. */
   .tap-target {

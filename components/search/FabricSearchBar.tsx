@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { LookSearchPanel } from './LookSearchPanel';
+import { Reveal } from '@/components/ui/Reveal';
 
 /**
  * Statement search: a full-width technical frame with crosshair corners,
@@ -14,20 +15,23 @@ export function FabricSearchBar({
   placeholder = 'Search by code, name, composition, colour…',
   shortPlaceholder = 'Code, name, colour…',
   photoSearch = false,
+  startWithPhoto = false,
 }: {
   placeholder?: string;
   /** Shown on phones, where the full placeholder would be cut off. */
   shortPlaceholder?: string;
   photoSearch?: boolean;
+  /** Open in photo mode (homepage hero); the camera still switches to text. */
+  startWithPhoto?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(searchParams.get('q') ?? '');
-  const [photoOpen, setPhotoOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(photoSearch && startWithPhoto);
   const textInput = useRef<HTMLInputElement>(null);
   const narrow = useNarrowScreen();
 
-  const wasPhotoOpen = useRef(false);
+  const wasPhotoOpen = useRef(photoOpen);
 
   // Back from photo to text search: put the cursor in the box once it is visible again.
   useEffect(() => {
@@ -125,21 +129,4 @@ function useNarrowScreen() {
     return () => query.removeEventListener('change', update);
   }, []);
   return narrow;
-}
-
-/**
- * Animates its content open and shut (height + fade) by transitioning the grid
- * row from 0fr to 1fr. When shut it is also invisible, so nothing inside can
- * be tabbed to; the visibility change waits for the fade to finish.
- */
-function Reveal({ show, children }: { show: boolean; children: React.ReactNode }) {
-  return (
-    <div
-      className={`grid transition-all duration-300 ease-out motion-reduce:transition-none ${
-        show ? 'visible grid-rows-[1fr] opacity-100' : 'invisible grid-rows-[0fr] opacity-0'
-      }`}
-    >
-      <div className="min-h-0 overflow-hidden">{children}</div>
-    </div>
-  );
 }

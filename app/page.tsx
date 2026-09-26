@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { appConfig } from '@/lib/config/app.config';
 import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
 import { getCurrentProfile } from '@/lib/api-helpers';
@@ -39,11 +38,14 @@ export default async function HomePage() {
           <TechnicalLabel crosshair>
             Mill archive · {totalFabrics} {totalFabrics === 1 ? 'quality' : 'qualities'} indexed
           </TechnicalLabel>
-          <h1 className="display-hero mt-6 max-w-4xl">{appConfig.name}</h1>
-          <p className="mt-8 max-w-xl text-base leading-relaxed text-graphite">{appConfig.tagline}</p>
+          <h1 className="display-hero mt-6 max-w-4xl">Upload a photo, find your fabric.</h1>
+          <p className="mt-8 max-w-xl text-base leading-relaxed text-graphite">
+            Photograph a hanger, a garment or a swatch — we&rsquo;ll match it against {totalFabrics} qualities
+            from {mills.length} mills. Prefer typing? Tap the camera button to search by code, name or colour.
+          </p>
           <div className="mt-14 max-w-2xl">
             <Suspense>
-              <FabricSearchBar />
+              <FabricSearchBar photoSearch startWithPhoto />
             </Suspense>
           </div>
           {canReview && pending.total > 0 && (

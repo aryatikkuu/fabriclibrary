@@ -27,7 +27,7 @@ export function LookChips({ note }: { note?: string }) {
 
   return (
     <div className="mt-6 border-l-2 border-thread pl-4">
-      <span className="font-mono text-[10px] uppercase tracking-label text-stone">Matching by look</span>
+      <span className="field-label">Matching by look</span>
       {note && <p className="mt-1 font-display text-lg text-ink">{note}</p>}
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {look.map((tag) => (

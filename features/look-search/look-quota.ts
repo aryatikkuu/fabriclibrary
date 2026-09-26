@@ -1,7 +1,7 @@
-import { createHash } from 'node:crypto';
 import type { NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { AppError } from '@/lib/errors';
+import { requestVisitor } from '@/lib/visitor';
 import { lookSearch } from '@/lib/config/visual-tags.config';
 import type { Profile } from '@/types/user';
 
@@ -11,14 +11,9 @@ import type { Profile } from '@/types/user';
  * that table or call claim_look_search.
  */
 
-/** Who is searching: the account when signed in, otherwise a hash of the IP. */
+/** Who is searching: the account when signed in, otherwise the hashed platform IP. */
 function clientKey(request: NextRequest, profile: Profile | null): string {
-  if (profile) return `user:${profile.id}`;
-  // request.ip is set by the platform (Vercel) and can't be faked by the visitor.
-  // Headers like X-Forwarded-For can be, so they're never used: without a real
-  // IP (e.g. local dev) every visitor shares one bucket — stricter, never looser.
-  const ip = request.ip ?? 'unknown';
-  return `ip:${createHash('sha256').update(ip).digest('hex').slice(0, 32)}`;
+  return profile ? `user:${profile.id}` : requestVisitor(request);
 }
 
 /**

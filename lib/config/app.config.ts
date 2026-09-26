@@ -16,6 +16,16 @@ export const appConfig = {
   storage: {
     bucket: process.env.STORAGE_BUCKET_NAME ?? 'textile-library',
   },
+  /**
+   * "Request swatches / price" (components/fabrics/RequestSwatches.tsx):
+   * the buyer's email app opens a pre-filled draft to this address, and the
+   * request is also saved as a lead (analytics page).
+   */
+  leads: {
+    email: 'pashantikku@gmail.com',
+    /** Requests one visitor can save per rolling 24 hours (spam guard). */
+    perVisitorPerDay: 10,
+  },
   pagination: {
     defaultPageSize: 24,
     maxPageSize: 100,
