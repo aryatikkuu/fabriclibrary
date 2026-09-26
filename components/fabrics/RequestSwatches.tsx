@@ -61,12 +61,12 @@ export function RequestSwatches({ fabric }: { fabric: FabricSummary }) {
   }
 
   return (
-    <section className="mt-10 border-t border-ink pt-6">
+    <section className="mt-10">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className={`btn-technical w-full justify-center ${open ? 'bg-ink text-paper' : ''}`}
+        className="btn-technical w-full justify-center bg-ink py-3.5 text-paper hover:bg-paper hover:text-ink"
       >
         Request swatches / price
       </button>

@@ -78,7 +78,7 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
           </div>
 
           <h1 className="mt-3 display-page">
-            {fabric.fabric_name ?? 'Unnamed quality'}
+            {fabric.fabric_name?.trim() || 'Unnamed quality'}
           </h1>
 
           {(fabric.description || fabric.ai_description) && (
@@ -94,10 +94,6 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
               )}
             </div>
           )}
-
-          <RequestSwatches
-            fabric={{ id: fabric.id, code: fabric.fabric_code, name: fabric.fabric_name, mill: fabric.mill?.name ?? null }}
-          />
 
           <div className="mt-10">
             <FabricTechnicalData fabric={fabric} />
@@ -126,6 +122,10 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
               </ul>
             </div>
           )}
+
+          <RequestSwatches
+            fabric={{ id: fabric.id, code: fabric.fabric_code, name: fabric.fabric_name, mill: fabric.mill?.name ?? null }}
+          />
         </div>
       </div>
 
