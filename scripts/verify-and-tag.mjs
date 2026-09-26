@@ -4,8 +4,8 @@
  *
  * Usage:
  *   npm run verify-tag -- [--model gpt-5.4-mini] [--sample 20] [--status approved] [--budget 1]
- *   npm run verify-tag -- --save [--fix-codes] [--apply]
- *                                               write a finished report to the database (no API calls)
+ *   npm run verify-tag -- --save [--fix-codes] [--apply] [--all]
+ *                                               write the report's new rows to the database (no API calls)
  *
  * One vision call per fabric, on its main photo at full resolution:
  *   - the label is read without showing the model the stored values, then
@@ -19,7 +19,9 @@
  * report are skipped). Spend is metered from the API's token counts and stops
  * at --budget USD (default 1).
  *
- * --save (dry run unless --apply) stores the report: visual tags into
+ * --save (dry run unless --apply) stores rows not saved before (--all: every
+ * row — this re-applies old results over later fixes, so use it deliberately):
+ * visual tags into
  * fabric_tags as "<group>:<value>" (replacing earlier visual tags, keeping the
  * end-use tags), the description into fabrics.ai_description, and each label
  * re-read into ai_extraction_logs (shown to staff on the fabric page).
@@ -202,7 +204,7 @@ function codeDecision(r) {
 
 /** Write a finished report to the database. Idempotent: re-running replaces the visual tags. */
 async function save(report, apply, fixCodes) {
-  const rows = Object.values(report.fabrics);
+  const rows = Object.values(report.fabrics).filter((r) => hasFlag('all') || !r.saved);
   const tagRows = rows.flatMap((r) =>
     Object.entries(r.tags).flatMap(([group, values]) => values.map((v) => ({ fabric_id: r.fabric_id, tag: `${group}:${v}` }))),
   );
@@ -273,6 +275,8 @@ async function save(report, apply, fixCodes) {
   }
   const failed = updates.filter((u) => u?.error);
   failed.slice(0, 5).forEach((u) => console.error('  FAIL', u.error));
+  for (const r of rows) report.fabrics[r.fabric_id].saved = true;
+  writeFileSync(REPORT, JSON.stringify(report, null, 1));
   console.log(`Saved: ${tagRows.length} tags, ${described.length - failed.length} descriptions, ${logs.length} log entries.`);
   if (fixCodes) console.log(`Codes: ${changes.length} corrected, ${collisions.length} skipped (already used by another fabric), ` +
     `${reviewIds.length} sent to review — see reports/code-changes.json`);

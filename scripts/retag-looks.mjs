@@ -4,10 +4,11 @@
  * "detail" group (gingham, pinstripe, herringbone …).
  *
  *   npm run retag -- [--select affected|patterned] [--report reports/x.json] [--sample 20] [--budget 1]
- *   npm run retag -- --save [--groups detail|none] [--fix-plain] [--apply]
+ *   npm run retag -- --save [--groups detail|none] [--fix-plain] [--apply] [--all]
  *
  * --save writes only the listed groups (default: detail) and leaves the
- * fabric's other tags alone. Re-tagging every group was tested and rejected:
+ * fabric's other tags alone. It writes only rows not saved before; --all
+ * re-applies every row. Re-tagging every group was tested and rejected:
  * the model re-describes colours differently run to run, which made search
  * worse for plain fabrics (reports/retag-benchmark.md).
  *
@@ -114,7 +115,7 @@ async function main() {
 async function save(report, apply) {
   const groups = flag('groups', 'detail') === 'none' ? [] : String(flag('groups', 'detail')).split(',');
   if (groups.some((g) => !(g in visualTags))) throw new Error(`Unknown group in --groups ${groups}`);
-  const rows = Object.values(report.fabrics);
+  const rows = Object.values(report.fabrics).filter((r) => hasFlag('all') || !r.saved);
   const toRows = (r, gs) => gs.flatMap((group) => (r.tags[group] ?? []).map((v) => ({ fabric_id: r.fabric_id, tag: `${group}:${v}` })));
   const tagRows = rows.flatMap((r) => toRows(r, groups));
   console.log(`${rows.length} fabrics: ${tagRows.length} tags in ${groups.join(', ')}`);
@@ -153,6 +154,8 @@ async function save(report, apply) {
     const { error } = await db.from('fabric_tags').upsert(batch, { onConflict: 'fabric_id,tag', ignoreDuplicates: true });
     if (error) throw new Error(`tags: ${error.message}`);
   }
+  for (const r of rows) report.fabrics[r.fabric_id].saved = true;
+  writeFileSync(REPORT, JSON.stringify(report, null, 1));
   console.log(`Saved ${tagRows.length} tags${fixes.length ? ` and fixed ${fixes.length} plain-tagged fabrics` : ''}.`);
 }
 

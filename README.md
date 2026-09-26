@@ -83,13 +83,55 @@ of keeping copies. Needs Node 22.6+.
 
 `backups/` is git-ignored — it contains user profiles and audit logs.
 
+## Adding new fabric photos (standard procedure)
+
+Every new batch goes through the same steps, in this order, so each fabric ends up with the same data:
+label details, cover photo, photo-search tags, a searchable description and its embedding.
+Skipping step 3 or 4 leaves fabrics that browse fine but **never appear in photo search**.
+
+**Photos:** one hanger per photo, label readable and in focus, JPEG/PNG/WebP. Put each mill's photos in
+their own folder. The mill must already exist (`lib/config/mills.config.ts`, then `npm run db:seed`).
+
+| # | Command | API calls | Writes | Cost (approx.) |
+|---|---|---|---|---|
+| 1 | `npm run backup` | — | `backups/<date>/` | free |
+| 2 | `npm run extract -- <mill-slug> "<photo folder>" 8` | OpenAI `gpt-5.4-nano` vision, 1 per photo — reads the label | fabric rows (`needs_review`), cover photo in Storage, end-use tags | < 0.1¢ / photo |
+| 3 | `npm run verify-tag -- --budget 5` | OpenAI `gpt-5.4-mini` vision, 1 per **new** fabric — re-reads the label blind, tags the look, writes a one-line description | `reports/verify-gpt-5.4-mini.json` only | ≈ 0.26¢ / fabric |
+| 4 | `npm run verify-tag -- --save` (check the dry run) then `npm run verify-tag -- --save --apply` | none | visual tags, `ai_description`, label checks — **new rows only** | free |
+| 5 | `npm run embed` | OpenAI `text-embedding-3-small`, batched — new/changed descriptions only | `fabric_embeddings` | < 0.01¢ / fabric |
+| 6 | Review queue (`/review`, staff) | none | approve / fix / reject; only approved fabrics are public | free |
+| 7 | `npm run backup` | — | — | free |
+
+- Steps 2, 3 and 5 are resumable and skip work already done — re-running after an interruption is safe.
+- Step 3 stops at `--budget` USD. Add `--fix-codes` to step 4 to let it correct near-miss codes and send big disagreements to review.
+- `--save` writes only rows it hasn't saved before. `--save --all` re-applies the whole report over later fixes
+  (e.g. the `detail` tags and plain-fabric corrections) — only use it deliberately.
+
+**Automated imports (n8n).** The workflow in `n8n/workflows/` does step 2 per photo through the API:
+
+```
+POST /api/ingest
+x-webhook-secret: <N8N_WEBHOOK_SECRET>
+Content-Type: application/json
+
+{ "filename": "IMG_1234.jpg", "image_base64": "<base64 JPEG/PNG/WebP, ≤ 15 MB>", "mill_slug": "orbit-exports" }
+```
+
+`mill_slug` is optional (otherwise the mill is read from the label). The response is the new fabric's
+id, code, mill, review status and photo URL; confident reads are approved straight away, the rest go to
+review. Fabrics added this way still need **steps 3–5** to appear in photo search.
+
+**One photo from the app.** Staff can `POST /api/upload` (multipart: `file`, `mill_slug`, `fabric_code`) to
+add a photo to Storage; attach it to a fabric and run steps 3–5 for it to be searchable.
+
+
 **Photo search** (Search tab, open to everyone): a photo and/or a note ("for summer shirts") is turned into the same tags by one AI call (`app/api/search/look`, ~0.14¢), and the database ranks the library against them plus the description embedding (`match_fabrics_by_look`, migrations 0006/0008). Daily limits per visitor, per signed-in user and for all non-admins together are enforced in the database (`look_searches`, migration 0009); admins are unlimited. Tag lists, ranking weights and limits live in `lib/config/visual-tags.config.ts`.
 
 ## Documentation
 
 | Doc | What it covers |
 |---|---|
-| [SECURITY](docs/SECURITY.md) | Private storage, rate limiting, audit logging, setup checklist |
+| [SECURITY](docs/SECURITY.md) | Access rules, photo-search limits, uploads, audit logging, headers, setup checklist |
 | [SYSTEM_ARCHITECTURE](docs/SYSTEM_ARCHITECTURE.md) | Layers, data flow, design decisions |
 | [DATABASE_SCHEMA](docs/DATABASE_SCHEMA.md) | Every table, column and relationship |
 | [SUPABASE_SETUP](docs/SUPABASE_SETUP.md) | Project, migrations, storage, first admin user |

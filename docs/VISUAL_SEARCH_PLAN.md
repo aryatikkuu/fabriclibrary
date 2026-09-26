@@ -202,14 +202,13 @@ $$;
 ## API and UI
 
 - `POST /api/search/image` — multipart upload, returns ranked fabrics.
-  - `requireRateLimit(request)` at the top of the handler (see `docs/SECURITY.md`).
+  - Rate limiting (built: database-enforced limits, see `docs/SECURITY.md` §3).
   - Validate MIME type and size before decoding anything.
   - Embed **in memory**. The query image is never written to the public bucket
     and never gets a public URL. If it must be persisted for debugging, use a
     private path with a TTL.
   - Resolve `include_unreviewed` from the caller's role server-side.
-- UI: a dropzone on `/search`, reusing the pattern in
-  `components/fabrics/ImageUploader.tsx`.
+- UI: a dropzone on `/search` (built: `components/search/LookSearchPanel.tsx`).
 - **Combine with the existing filters** — "looks like this *and* is 150–200 GSM
   *and* is Banswara" is the actual sourcing question, and the filter UI already
   exists. Apply structured filters to the candidate set returned by the vector

@@ -1,6 +1,6 @@
 # Security Guide
 
-Three layers of security improvements are built into this version:
+How the library is protected, and what to check when setting it up. The short version is in the README's Security section.
 
 ## 1. Storage: Public Bucket + Signed URL Option
 
@@ -14,74 +14,63 @@ Three layers of security improvements are built into this version:
 
 ---
 
-## 2. Rate Limiting
+## 2. Access control
 
-**Status:** ✅ Implemented
+**Status:** ✅ Enforced in the database (RLS) and re-checked by every API route
 
-- **10 requests per minute per IP** on API endpoints
-- **Non-blocking** — if exceeded, the API returns 429 (Too Many Requests) and the user is asked to try again
-- **In-memory tracking** — runs on the server, no database hit
-- **Applied to:** POST /api/fabrics (and can be added to other endpoints)
+- Visitors and viewers see **approved fabrics only**, plus those fabrics' images, tags and similarity links (migrations 0002, 0010).
+- Editors and admins create, edit and review; only admins delete.
+- **Roles change only in Supabase** (Table Editor → `profiles`). Signed-in users can update nothing on their profile but `full_name` — column privileges, migration 0010. (Before 0010 a viewer could promote themselves to admin.)
+- API routes call `requirePermission(...)`; the n8n endpoints check `x-webhook-secret` in constant time (`verifyWebhookSecret`).
 
-**How it works:**
-```
-User/bot makes 11 requests in 1 minute → 
-  first 10 succeed, 11th returns 429 → 
-  user waits 60 seconds → counter resets
-```
+**Test it the way the browser does** — with the anon key through the API, not by switching roles in the SQL editor (it runs as `postgres` and gives misleading results).
 
-**Why:** Prevents brute force attacks, scraping, and API abuse.
+---
 
-**To add rate limiting to more endpoints:** Add `requireRateLimit(request)` at the top of any API POST/PATCH/DELETE handler:
+## 3. Photo search limits
 
-```typescript
-export async function POST(request: NextRequest) {
-  try {
-    requireRateLimit(request);  // ← Add this line
-    // rest of handler...
-  }
-}
+**Status:** ✅ Enforced in the database before any AI call
+
+- Open to everyone. Per rolling 24 h: 10 per visitor, 30 per signed-in user, 300 for all non-admins together (~$0.42/day ceiling); at most 5 a minute each; admins unlimited. Values: `lookSearch.limits` in `lib/config/visual-tags.config.ts`.
+- `claim_look_search()` (migrations 0009/0010) checks and records each search under a lock, so parallel requests can't exceed a limit; only the service role can call it.
+- Visitors are identified by the platform's IP (`request.ip`), stored as a hash; `X-Forwarded-For` and similar headers are ignored because clients can fake them. History older than 30 days is deleted automatically.
+- Results pages read a search's description and embedding by id — a crafted URL can't trigger an AI call.
+
+---
+
+## 4. Uploads and AI input
+
+- Every photo endpoint (`/api/upload`, `/api/ingest`, `/api/ai-extraction/extract`, `/api/search/look`) accepts only JPEG, PNG or WebP, **recognised from the file's bytes** (`lib/images.ts`), with a size cap.
+- Storage paths are built only from sanitised segments (`lib/config/storage.config.ts`), so `../` can't escape a mill's folder; uploads to unknown mills are rejected.
+- AI output is untrusted: tags must come from the fixed vocabulary, descriptions are cleaned to one plain line, and a customer's note is passed as quoted data, never instructions.
+
+---
+
+## 5. Audit logging
+
+**Status:** ✅ Working since migration 0010 (before it, staff inserts were silently rejected, so older actions weren't logged)
+
+- Fabric create/update/delete and review approve/reject/rerun are logged by the services, with before/after snapshots. Staff can only log their own actions.
+
+```sql
+select * from audit_logs order by created_at desc limit 50;
 ```
 
 ---
 
-## 3. Audit Logging
+## 6. Security headers
 
-**Status:** ✅ Implemented
-
-- **Every action is logged** — who did what, when, to which fabric
-- **Stored in `audit_logs` table** — kept in Supabase forever
-- **Before/after snapshots** — see exactly what changed
-- **Automatic** — no code needed; the services handle it
-
-**What gets logged:**
-- ✅ Fabric created
-- ✅ Fabric updated
-- ✅ Fabric deleted
-- ✅ AI extraction approved
-- ✅ AI extraction rejected
-- ✅ Extraction rerun
-
-**View the audit log:**
-Supabase → SQL Editor → Run this:
-```sql
-select * from audit_logs 
-order by created_at desc 
-limit 50;
-```
-
-**Why:** You can see a complete history of who approved which fabrics, made which changes, and when. Helps catch mistakes or unauthorized actions.
+`next.config.mjs` sends a Content-Security-Policy (this site + Supabase only), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, HSTS, and strict referrer and permissions policies on every response.
 
 ---
 
 ## Setup Checklist
 
-- [ ] **Supabase → Storage:** Keep `textile-library` bucket **Public** (default; see section 1)
-- [ ] **Supabase → Authentication:** Turn off **"Enable email signups"** (staff signup by admin only)
-- [ ] **Supabase → Authentication:** Enable **Multi-Factor Authentication (MFA)** for all users
-- [ ] **npm install:** Rate limiting is built in; no additional setup needed
-- [ ] **Test rate limit:** Make 11 rapid requests to POST /api/fabrics, see if the 11th fails (expected)
-- [ ] **View audit log:** Check Supabase SQL to confirm actions are being logged
+- [ ] **Supabase → Storage:** keep the `textile-library` bucket **Public** (section 1)
+- [ ] **Supabase → Authentication:** turn off **"Allow new users to sign up"** — an admin creates accounts
+- [ ] **Supabase → Authentication:** enable **MFA** for staff
+- [ ] **Vercel:** `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY` and `N8N_WEBHOOK_SECRET` set, and nothing secret named `NEXT_PUBLIC_…`
+- [ ] **Migrations 0001–0010** applied
 
 ---
 
@@ -103,16 +92,16 @@ These are good ideas but left out to keep the setup simple:
 - Bucket was switched to private without moving reads to signed URLs → set it back to Public, or refactor reads to `getSignedUrl()`
 - RLS/storage policy missing → re-run `0003_storage_bucket.sql`
 
-**Rate limiting is too strict:**
-- Limit is 10/minute per IP; if you need higher, edit `checkRateLimit()` in `lib/api-helpers.ts`
-- Test environment may share an IP — if testing from the same machine, you'll hit the limit; wait 60 seconds
+**"Too many photo searches" / daily limit reached:**
+- Limits are in `lookSearch.limits` (`lib/config/visual-tags.config.ts`); admins are never limited
+- Local development has no real IP, so all local visitors share one limit
 
 **Audit log is empty:**
-- Check that the `audit_logs` table exists (run migrations in Supabase)
-- Check that staff users are actually making changes (they must be logged in)
+- Check migration 0010 is applied (it adds the staff insert policy)
+- Only signed-in staff actions are logged
 
 ---
 
 ## Questions?
 
-This guide covers the three improvements in this version. For Supabase-specific security (2FA, RLS, backups), see their docs at supabase.com/security.
+For Supabase-specific security (2FA, RLS, backups), see their docs at supabase.com/security.

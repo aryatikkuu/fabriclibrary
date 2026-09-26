@@ -9,9 +9,11 @@ Create an API key at [platform.openai.com](https://platform.openai.com/api-keys)
 | Use | Entry point | Prompt file |
 |---|---|---|
 | Hanger label extraction (Vision) | `features/ai-extraction/extraction.service.ts` | `features/ai-extraction/prompts/fabric-extraction.prompt.ts` |
-| Search assistant (NL → filters) | `app/api/assistant/route.ts` | `features/ai-extraction/prompts/search-assistant.prompt.ts` |
+| Photo search: photo/note → tags (`gpt-5.4-mini`) | `features/look-search/read-look.ts` | `features/ai-extraction/prompts/fabric-tags.prompt.ts` |
+| Photo search: description embedding | `features/look-search/embed-look.ts` | — (`text-embedding-3-small`) |
+| Library tagging scripts (`npm run verify-tag`, `npm run retag`) | `scripts/verify-and-tag.mjs`, `scripts/retag-looks.mjs` | `fabric-verify.prompt.ts`, `fabric-tags.prompt.ts` |
 
-Model: **`gpt-5.4-nano`** (cheapest with vision), `response_format: json_object`, `temperature: 0` (deterministic extraction). The model name is a constant in `lib/openai.ts` — change it in one place to swap models.
+Label extraction uses **`gpt-5.4-nano`** (cheapest with vision), `response_format: json_object`; the default model lives in `lib/openai.ts`. Photo search and the tagging scripts use **`gpt-5.4-mini`** so a buyer's photo and the library are described by the same model.
 
 ## 3. The extraction contract
 
