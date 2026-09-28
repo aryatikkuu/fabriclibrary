@@ -144,7 +144,8 @@ export class FabricRepository {
       .eq('review_status', 'approved')
       .eq('is_complete', true)
       .gte('extraction_confidence', showcase.minConfidence);
-    for (const column of showcase.requiredFields) query = query.not(column, 'is', null);
+    // Filled in means not null and not blank (some reads saved '').
+    for (const column of showcase.requiredFields) query = query.not(column, 'is', null).neq(column, '');
 
     const { data, error } = await query
       .order('extraction_confidence', { ascending: false })

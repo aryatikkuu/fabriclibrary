@@ -50,8 +50,8 @@ export const appConfig = {
 export const showcase = {
   minConfidence: 85,
   requiredFields: ['fabric_name', 'fabric_type', 'color'],
-  /** How many top candidates to choose from. */
-  candidates: 60,
+  /** How many top candidates to choose from — enough that every mill's best are in the pool. */
+  candidates: 200,
   featured: 8,
   recent: 4,
 } as const;
