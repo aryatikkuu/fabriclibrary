@@ -72,6 +72,11 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
               {fabric.fabric_code ?? "No code"}
             </span>
             {isStaff && <StatusBadge status={fabric.review_status} />}
+            {isStaff && !(fabric.is_complete && fabric.images.length > 0) && (
+              <span className="t-label text-thread" title="Needs a code, composition, GSM and a photo">
+                Hidden from public
+              </span>
+            )}
             {isStaff && fabric.extraction_confidence != null && (
               <ConfidenceBadge score={fabric.extraction_confidence} />
             )}
@@ -80,6 +85,10 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
           <h1 className="mt-3 display-page">
             {fabric.fabric_name?.trim() || 'Unnamed quality'}
           </h1>
+
+          <RequestSwatches
+            fabric={{ id: fabric.id, code: fabric.fabric_code, name: fabric.fabric_name, mill: fabric.mill?.name ?? null }}
+          />
 
           {(fabric.description || fabric.ai_description) && (
             <div className="mt-6 space-y-4 text-base leading-relaxed text-graphite">
@@ -123,9 +132,6 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
             </div>
           )}
 
-          <RequestSwatches
-            fabric={{ id: fabric.id, code: fabric.fabric_code, name: fabric.fabric_name, mill: fabric.mill?.name ?? null }}
-          />
         </div>
       </div>
 

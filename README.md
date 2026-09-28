@@ -1,4 +1,4 @@
-# Digital Textile Library
+# TMS Textile Library
 
 A premium digital archive for mill fabrics. Hanger/fabric photos are read (fabric code, composition, GSM, width, colour, suggested use) by `npm run extract`, which sends each photo to OpenAI Vision with the app's own extraction prompt, then loads the results through `scripts/bulk-insert.mjs` — uploading the image to Supabase Storage and saving the record to Supabase Postgres. (An n8n workflow is retained in `n8n/workflows/` as an alternative path.) Every extraction lands in the Review Queue. Nothing publishes without a human confirming it, regardless of confidence score.
 
@@ -99,7 +99,7 @@ their own folder. The mill must already exist (`lib/config/mills.config.ts`, the
 | 3 | `npm run verify-tag -- --budget 5` | OpenAI `gpt-5.4-mini` vision, 1 per **new** fabric — re-reads the label blind, tags the look, writes a one-line description | `reports/verify-gpt-5.4-mini.json` only | ≈ 0.26¢ / fabric |
 | 4 | `npm run verify-tag -- --save` (check the dry run) then `npm run verify-tag -- --save --apply` | none | visual tags, `ai_description`, label checks — **new rows only** | free |
 | 5 | `npm run embed` | OpenAI `text-embedding-3-small`, batched — new/changed descriptions only | `fabric_embeddings` | < 0.01¢ / fabric |
-| 6 | Review queue (`/review`, staff) | none | approve / fix / reject; only approved fabrics are public | free |
+| 6 | Review queue (`/review`, staff) | none | approve / fix / reject; only approved, complete fabrics are public | free |
 | 7 | `npm run backup` | — | — | free |
 
 - Steps 2, 3 and 5 are resumable and skip work already done — re-running after an interruption is safe.
@@ -148,7 +148,7 @@ add a photo to Storage; attach it to a fabric and run steps 3–5 for it to be s
 
 | Permission | Admin | Editor | Viewer / Public |
 |---|---|---|---|
-| Browse approved fabrics | ✅ | ✅ | ✅ |
+| Browse approved, complete fabrics | ✅ | ✅ | ✅ |
 | Photo search | ✅ unlimited | ✅ 30/day | ✅ 30/day signed in, 10/day visitor |
 | Create / edit fabrics | ✅ | ✅ | — |
 | Review queue (approve / reject / re-run AI) | ✅ | ✅ | — |
@@ -159,12 +159,12 @@ add a photo to Storage; attach it to a fabric and run steps 3–5 for it to be s
 
 ## Security
 
-- **Access rules live in the database (RLS)**, migrations 0002 and 0010: visitors and viewers see approved fabrics only — and only those fabrics' images, tags and similarity links; staff write; only admins delete or change roles (a trigger blocks anyone else changing `profiles.role`). Every API route re-checks its permission (`requirePermission`) or the n8n secret (`verifyWebhookSecret`, constant-time).
+- **Access rules live in the database (RLS)**, migrations 0002, 0010 and 0012: visitors and viewers see only fabrics that are approved **and complete** (code, composition, GSM and a photo) — and only those fabrics' images, documents, tags and similarity links. Staff see everything; the fabric page marks the rest "Hidden from public"; staff write; only admins delete or change roles (a trigger blocks anyone else changing `profiles.role`). Every API route re-checks its permission (`requirePermission`) or the n8n secret (`verifyWebhookSecret`, constant-time).
 - **Photo search limits** are enforced in one locked database step before any AI call (`claim_look_search`, migrations 0009/0010): 5 a minute and a daily limit per visitor/user, one daily ceiling for everyone but admins, 30-day retention. Visitors are identified by the platform's IP only (spoofable headers are ignored), stored hashed.
 - **Uploads** (`lib/images.ts`): only JPEG, PNG and WebP, recognised from the file's bytes rather than its claimed type, with a size cap; storage paths are built from sanitised segments only (`lib/config/storage.config.ts`).
 - **AI output is untrusted**: tags must come from the fixed vocabulary, the description is cleaned to one plain line, and the customer's note is passed as quoted data, never instructions. Results pages read a search's description and embedding from the database by id, so a crafted URL can't trigger an AI call or show made-up text.
 - **Security headers** on every response (`next.config.mjs`): a Content-Security-Policy allowing only this site and Supabase, no framing, `nosniff`, HSTS, strict referrer and permissions policies.
-- **Leads and page views** (migration 0011) are written only by server code and readable only by admins. "Request swatches / price" saves the request (`/api/leads`: validated, 10/day per visitor, bot honeypot) and opens the buyer's email app with a pre-filled draft to `appConfig.leads.email`. Views count once per fabric, per visitor, per day; staff and bots aren't counted. See `/analytics`.
+- **Leads and page views** (migration 0011) are written only by server code and readable only by admins. "Request swatches / price" saves the request (`/api/leads`: validated, 10/day per visitor, bot honeypot) and opens the buyer's email app with a pre-filled draft to `appConfig.contact.email` (a WhatsApp link sits under the button when `contact.whatsapp` is set). Views count once per fabric, per visitor, per day; staff and bots aren't counted. See `/analytics`.
 - **Secrets** (`SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `N8N_WEBHOOK_SECRET`) are server-only; nothing secret uses the `NEXT_PUBLIC_` prefix.
 - Tests: `tests/unit/security.test.ts`. Accounts are created by an admin — keep "Allow new users to sign up" off in Supabase.
 

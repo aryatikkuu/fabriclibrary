@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { FabricSimilarity, FabricWithRelations } from '@/types/fabric';
+import { FABRIC_COLUMNS } from '@/repositories/fabric.repository';
 
 export class SimilarityRepository {
   constructor(private readonly db: SupabaseClient) {}
@@ -27,7 +28,7 @@ export class SimilarityRepository {
   > {
     const { data, error } = await this.db
       .from('fabric_similarities')
-      .select('*, fabric:fabrics!fabric_similarities_similar_fabric_id_fkey(*, mill:mills(id, name, slug), images:fabric_images(*))')
+      .select(`*, fabric:fabrics!fabric_similarities_similar_fabric_id_fkey(${FABRIC_COLUMNS}, mill:mills(id, name, slug), images:fabric_images(*))`)
       .eq('source_fabric_id', sourceFabricId)
       .order('similarity_score', { ascending: false })
       .limit(limit);

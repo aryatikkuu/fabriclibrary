@@ -61,7 +61,7 @@ Cross-cutting modules:
 
 | Caller | Client used | Protection |
 |---|---|---|
-| Public visitor | anon (RLS) | sees `review_status = 'approved'` only |
+| Public visitor | anon (RLS) | sees approved, complete fabrics only (0012) |
 | Signed-in staff | user-scoped (RLS) | role checked via `profiles.role` + `requirePermission` |
 | n8n | service-role (bypasses RLS) | `x-webhook-secret` header must match `N8N_WEBHOOK_SECRET` |
 

@@ -29,7 +29,7 @@ export function buildServices(db: SupabaseClient) {
 
   return {
     fabricService: new FabricService(fabricRepository, auditLogService),
-    millService: new MillService(millRepository, fabricRepository),
+    millService: new MillService(millRepository),
     storageService: new StorageService(db),
     similarityService: new SimilarityService(fabricRepository, similarityRepository),
     reviewService: new ReviewService(

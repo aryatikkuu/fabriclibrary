@@ -56,6 +56,7 @@ Migrations live in `database/migrations/` and are plain SQL — paste into the S
 | ai_description | text | model-written note, labelled in the UI |
 | extraction_confidence | numeric | 0–100 |
 | review_status | text | `approved` \| `needs_review` \| `rejected` (CHECK) |
+| is_complete | boolean | generated: has code, composition and GSM (0012). Visitors see a fabric only if this is true, it's approved and it has a photo |
 | search_vector | tsvector **generated** | code+name+type+composition+color+suggested_use+description; GIN-indexed |
 | created_by | uuid FK → profiles | nullable (automation) |
 | created_at / updated_at | timestamptz | |
@@ -85,7 +86,7 @@ Migrations live in `database/migrations/` and are plain SQL — paste into the S
 
 ## RLS summary (0002)
 
-- **Public/viewer:** `select` on mills (active), fabrics (`review_status = 'approved'`), their images/documents/tags/similarities.
+- **Public/viewer:** `select` on mills (active), fabrics (`review_status = 'approved'` and complete: `is_complete` + a photo, migration 0012), their images/documents/tags/similarities.
 - **Editor:** full read; insert/update fabrics and related; read review queue.
 - **Admin:** everything, including delete, profiles and audit_logs.
 - Helper `current_role()` reads the caller's `profiles.role` once per policy.

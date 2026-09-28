@@ -2,13 +2,17 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
- * Keeps Supabase auth sessions fresh on every request. Route-level
+ * Keeps Supabase auth sessions fresh on every signed-in request. Route-level
  * authorization happens in API handlers (requirePermission) and in
  * server components (e.g. the /review page) — this middleware only
  * refreshes tokens and forwards cookies.
  */
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
+
+  // Signed-out visitors have no Supabase session cookie (sb-…-auth-token),
+  // so there is nothing to refresh — skip the round trip to Supabase.
+  if (!request.cookies.getAll().some(({ name }) => name.startsWith('sb-'))) return response;
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

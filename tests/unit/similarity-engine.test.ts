@@ -22,6 +22,7 @@ function fabric(overrides: Partial<Fabric>): Fabric {
     suggested_use: null,
     extraction_confidence: null,
     review_status: 'approved',
+    is_complete: true,
     created_by: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

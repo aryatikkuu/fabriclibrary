@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
+import { cache } from 'react';
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { AppError, ForbiddenError, UnauthorizedError } from '@/lib/errors';
@@ -27,8 +28,12 @@ export function handleApiError(error: unknown): NextResponse {
   );
 }
 
-/** Resolve the signed-in user's profile, or null for anonymous requests. */
-export async function getCurrentProfile(): Promise<Profile | null> {
+/**
+ * Resolve the signed-in user's profile, or null for anonymous requests.
+ * Cached per request: the header and the page both ask, but Supabase is
+ * only asked once.
+ */
+export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return null;
@@ -38,7 +43,7 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     .eq('id', auth.user.id)
     .single();
   return (data as Profile) ?? null;
-}
+});
 
 /** Guard an API handler behind a permission from roles.config. */
 export async function requirePermission(permission: keyof typeof rolePermissions): Promise<Profile> {

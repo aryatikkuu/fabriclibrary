@@ -27,9 +27,8 @@ export async function SiteHeader() {
       <div className="mx-auto flex h-[var(--header-h)] w-full max-w-site items-center justify-between gap-4 px-6 md:px-12">
         <Link href="/" className="group flex min-w-0 items-baseline gap-3">
           <span aria-hidden className="h-[1.1em] w-0.5 shrink-0 self-center bg-thread" />
-          <span className="truncate font-display text-lg tracking-display text-ink md:text-xl">
-            {appConfig.name}
-          </span>
+          <span className="font-display text-lg tracking-display text-ink md:text-xl">{appConfig.brand.mark}</span>
+          <span className="t-label truncate">{appConfig.brand.product}</span>
         </Link>
 
         {/* Desktop: inline bar. Hidden below md, where MobileNav takes over. */}

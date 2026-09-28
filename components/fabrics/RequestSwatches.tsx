@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { appConfig } from '@/lib/config/app.config';
 import { leadMailto, type LeadRequest } from '@/features/leads/lead';
+import { whatsappLink } from '@/lib/contact';
 import { Reveal } from '@/components/ui/Reveal';
 
 /** Short labels for the selector (the email says "Swatch and price" in full). */
@@ -18,8 +19,10 @@ interface FabricSummary {
 /**
  * "Request swatches / price" on a fabric page. The buyer fills in who they
  * are; the request is saved as a lead (POST /api/leads), then their email
- * app opens a pre-filled draft to appConfig.leads.email with the fabric code,
- * so they only have to press send. The draft opens even if saving fails.
+ * app opens a pre-filled draft to appConfig.contact.email with the fabric
+ * code, so they only have to press send. The draft opens even if saving
+ * fails. When a WhatsApp number is configured, a chat link with the code
+ * already typed sits under the button.
  */
 export function RequestSwatches({ fabric }: { fabric: FabricSummary }) {
   const [open, setOpen] = useState(false);
@@ -27,6 +30,8 @@ export function RequestSwatches({ fabric }: { fabric: FabricSummary }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mailto, setMailto] = useState<string | null>(null);
+  const label = fabric.code ?? fabric.name ?? 'this fabric';
+  const whatsapp = whatsappLink(`Hello, I'd like a swatch / price for ${label}.`);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,7 +55,7 @@ export function RequestSwatches({ fabric }: { fabric: FabricSummary }) {
       });
       // Invalid details: let them fix it. Anything else (limit, outage): still open the email.
       if (res.status === 400) throw new Error('Please check your name, email and WhatsApp number.');
-      const link = leadMailto(appConfig.leads.email, lead, { ...fabric, url: window.location.href.split('?')[0] });
+      const link = leadMailto(appConfig.contact.email, lead, { ...fabric, url: window.location.href.split('?')[0] });
       setMailto(link);
       window.location.href = link;
     } catch (e) {
@@ -61,7 +66,7 @@ export function RequestSwatches({ fabric }: { fabric: FabricSummary }) {
   }
 
   return (
-    <section className="mt-10">
+    <section className="mt-8">
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -70,6 +75,11 @@ export function RequestSwatches({ fabric }: { fabric: FabricSummary }) {
       >
         Request swatches / price
       </button>
+      {whatsapp && (
+        <a href={whatsapp} target="_blank" rel="noreferrer" className="t-label mt-3 inline-flex items-center gap-2 hover:text-ink">
+          Or ask on WhatsApp
+        </a>
+      )}
 
       <Reveal show={open}>
         {mailto ? (
@@ -77,8 +87,8 @@ export function RequestSwatches({ fabric }: { fabric: FabricSummary }) {
             <p className="font-display text-lg text-ink">Your email is ready — just press send.</p>
             <p className="mt-2">
               Nothing opened? <a href={mailto} className="text-ink underline underline-offset-4">Open the email again</a>,
-              or write to <a href={`mailto:${appConfig.leads.email}`} className="text-ink underline underline-offset-4">{appConfig.leads.email}</a> quoting{' '}
-              <span className="font-mono text-ink">{fabric.code ?? fabric.name}</span>.
+              or write to <a href={`mailto:${appConfig.contact.email}`} className="text-ink underline underline-offset-4">{appConfig.contact.email}</a> quoting{' '}
+              <span className="font-mono text-ink">{label}</span>.
             </p>
           </div>
         ) : (

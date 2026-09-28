@@ -1,5 +1,4 @@
 import type { MillRepository } from '@/repositories/mill.repository';
-import type { FabricRepository } from '@/repositories/fabric.repository';
 import type { Mill } from '@/types/mill';
 
 export interface MillWithCount extends Mill {
@@ -7,23 +6,14 @@ export interface MillWithCount extends Mill {
 }
 
 export class MillService {
-  constructor(
-    private readonly mills: MillRepository,
-    private readonly fabrics: FabricRepository,
-  ) {}
+  constructor(private readonly mills: MillRepository) {}
 
   list(): Promise<Mill[]> {
     return this.mills.findAllActive();
   }
 
-  async listWithCounts(): Promise<MillWithCount[]> {
-    const mills = await this.mills.findAllActive();
-    return Promise.all(
-      mills.map(async (mill) => ({
-        ...mill,
-        fabricCount: await this.fabrics.countByMill(mill.id),
-      })),
-    );
+  listWithCounts(): Promise<MillWithCount[]> {
+    return this.mills.findAllActiveWithCounts();
   }
 
   getBySlug(slug: string): Promise<Mill> {

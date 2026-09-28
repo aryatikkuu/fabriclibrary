@@ -20,6 +20,8 @@ export interface Fabric {
   suggested_use: string | null;
   extraction_confidence: number | null;
   review_status: ReviewStatus;
+  /** Has a code, composition and GSM (generated column, migration 0012). Visitors also need a photo to see it. */
+  is_complete: boolean;
   created_by: string | null;
   created_at: string;
   updated_at: string;

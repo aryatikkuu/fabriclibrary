@@ -18,7 +18,7 @@ How the library is protected, and what to check when setting it up. The short ve
 
 **Status:** ✅ Enforced in the database (RLS) and re-checked by every API route
 
-- Visitors and viewers see **approved fabrics only**, plus those fabrics' images, tags and similarity links (migrations 0002, 0010).
+- Visitors and viewers see **approved, complete fabrics only** (code, composition, GSM and a photo), plus those fabrics' images, documents, tags and similarity links (migrations 0002, 0010, 0012).
 - Editors and admins create, edit and review; only admins delete.
 - **Roles change only in Supabase** (Table Editor → `profiles`). Signed-in users can update nothing on their profile but `full_name` — column privileges, migration 0010. (Before 0010 a viewer could promote themselves to admin.)
 - API routes call `requirePermission(...)`; the n8n endpoints check `x-webhook-secret` in constant time (`verifyWebhookSecret`).

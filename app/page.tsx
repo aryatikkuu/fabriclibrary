@@ -19,10 +19,9 @@ export default async function HomePage() {
   const profile = await getCurrentProfile();
   const canReview = roleCan(profile?.role, 'review.read');
 
-  const [mills, recent, featured, pending] = await Promise.all([
+  const [mills, { featured, recent }, pending] = await Promise.all([
     services.millService.listWithCounts(),
-    services.fabricService.search({ reviewStatus: 'approved', sort: 'newest', pageSize: 8 }),
-    services.fabricService.search({ reviewStatus: 'approved', sort: 'code', pageSize: 4 }),
+    services.fabricService.showcase(),
     canReview
       ? services.reviewService.getQueue(1, 1)
       : Promise.resolve({ items: [], total: 0, page: 1, pageSize: 1 }),
@@ -65,23 +64,23 @@ export default async function HomePage() {
       {/* Mills */}
       <MillSection mills={mills} />
 
-      {/* Recently added */}
+      {/* Selected — the best-described fabrics, a few from each mill */}
       <section className="mt-24">
         <SectionHeading
-          title="Recently added"
+          title="From the archive"
           aside={<Link href="/fabrics" className="t-label hover:text-ink">View all <Arrow /></Link>}
         />
         <div className="mt-10">
-          <FabricGrid fabrics={recent.items} emptyHint="Run the seed script or upload a hanger photo to begin." />
+          <FabricGrid fabrics={featured} emptyHint="Run the seed script or upload a hanger photo to begin." />
         </div>
       </section>
 
-      {/* Featured */}
-      {featured.items.length > 0 && (
+      {/* Recently added — newest of the same well-described set */}
+      {recent.length > 0 && (
         <section className="mt-24">
-          <SectionHeading title="From the archive" aside={<TechnicalLabel>Selected qualities</TechnicalLabel>} />
+          <SectionHeading title="Recently added" aside={<TechnicalLabel>New qualities</TechnicalLabel>} />
           <div className="mt-10">
-            <FabricGrid fabrics={featured.items} />
+            <FabricGrid fabrics={recent} />
           </div>
         </section>
       )}

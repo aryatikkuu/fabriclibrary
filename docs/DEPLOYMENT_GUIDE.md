@@ -19,7 +19,6 @@ Target stack: **Vercel** (app) + **Supabase cloud** (DB/auth/storage) + **n8n** 
 | `SUPABASE_SERVICE_ROLE_KEY` | **secret** — server only |
 | `OPENAI_API_KEY` | **secret** |
 | `N8N_WEBHOOK_SECRET` | **secret** — same value as in n8n |
-| `NEXT_PUBLIC_APP_NAME` | branding (optional) |
 | `AI_CONFIDENCE_THRESHOLD` | optional, default 75 |
 | `STORAGE_BUCKET_NAME` | optional, default `textile-library` |
 
@@ -33,7 +32,7 @@ Update `TEXTILE_LIBRARY_URL` in n8n to the Vercel URL and activate the workflow.
 
 - [ ] Drop a test image → record appears (check `ai_extraction_logs` for the run).
 - [ ] `/review` reachable for admin/editor, redirects for anonymous.
-- [ ] Anonymous browsing shows **approved** fabrics only.
+- [ ] Anonymous browsing shows **approved, complete** fabrics only (migration 0012).
 - [ ] Images render (Supabase Storage public URL; `next.config.mjs` already allows `*.supabase.co`).
 - [ ] `N8N_WEBHOOK_SECRET` is long and random; a request without it returns 401.
 - [ ] Supabase **Auth → URL Configuration**: site URL set to the Vercel domain.

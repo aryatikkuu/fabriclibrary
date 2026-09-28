@@ -1,4 +1,8 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+
+// React's per-request cache() only exists in the React build Next.js bundles
+// for server code; outside Next it's a plain pass-through.
+vi.mock('react', async (original) => ({ ...(await original<object>()), cache: <T>(fn: T) => fn }));
 import { validateImage, decodeBase64Image } from '@/lib/images';
 import { parseSearchPageParams } from '@/features/fabrics/types/fabric.schema';
 import { verifyWebhookSecret } from '@/lib/api-helpers';

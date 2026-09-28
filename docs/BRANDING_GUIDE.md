@@ -8,7 +8,7 @@ The entire look is driven by **one token block** at the top of `app/globals.css`
 - **Dark mode** — set `NEXT_PUBLIC_THEME=midnight` in `.env.local` to switch the whole site to the dark "Midnight Archive" theme. Its palette lives in the `[data-theme='midnight']` block of the same file.
 - **Grain** — `--grain-opacity` (0 = flat digital, 1 = heavy paper).
 - **Accent** — `--c-thread` is the single selvedge-red accent. Change one line to rebrand the accent everywhere (hero edge, hovers, focus rings, crosshairs).
-- **Name** — `NEXT_PUBLIC_APP_NAME` in `.env.local` changes the wordmark, page titles and footer.
+- **Name & contact** — `appConfig` in `lib/config/app.config.ts`: `name`, `brand`, `tagline` and `contact` (email, phone, WhatsApp, address).
 - **Type voice** — swap the three fonts in `app/layout.tsx` (display / body / mono); every component uses the font variables, never font names.
 - **Shared vocabulary** — `.t-label`, `.btn-technical`, `.stitch`, `.selvedge`, `.display-hero`, `.display-page` in `globals.css`, plus `<TechnicalLabel>` and `<CornerFrame>` in `components/ui/`. Edit once, applied everywhere.
 
@@ -17,9 +17,12 @@ The interface is deliberately quiet — an archival, editorial frame in warm neu
 
 ## 1. Name & identity
 
-- `NEXT_PUBLIC_APP_NAME` env var → header wordmark, page titles, login button.
-- `lib/config/app.config.ts` → `tagline` (homepage), `company.logoPath`.
-- `public/logo.svg` → replace with your mark (the header currently sets the name in type; wire the logo in `SiteHeader` if preferred).
+All in `lib/config/app.config.ts`:
+- `name` → page titles, login button, footer.
+- `brand` → header wordmark (`mark`, e.g. "TMS") and the small label beside it (`product`).
+- `tagline` → meta description and footer.
+- `contact` → footer contact lines, the fabric page's WhatsApp link, and the address swatch/price requests are emailed to. Empty fields (other than email) are hidden.
+- `public/logo.svg` → replace with your mark (the header sets the name in type; wire the logo in `SiteHeader` if preferred).
 
 ## 2. Palette — `tailwind.config.ts`
 

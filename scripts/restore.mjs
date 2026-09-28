@@ -12,6 +12,9 @@
  *     Rows that exist in the target get the backup's values; rows that exist only
  *     in the target are left alone (nothing is deleted).
  *   - The schema must already exist: run database/migrations/* on a new project first.
+ *   - Columns the database computes itself (GENERATED below) are left out: Postgres
+ *     refuses writes to them and rebuilds them from the restored values. On a new
+ *     project fabrics get fresh library numbers.
  *   - profiles are tied to Supabase Auth users, which a table backup cannot carry.
  *     Profiles whose auth user is missing are skipped, and references to them
  *     (fabrics.created_by, audit_logs.user_id) are set to null.
@@ -36,6 +39,13 @@ const CHUNK = 500;
 
 /** Columns pointing at profiles, which may not survive a move to a new project. */
 const PROFILE_REFS = { fabrics: 'created_by', audit_logs: 'user_id' };
+
+/** Generated columns (migrations 0004, 0005, 0012) — the database fills these in. */
+const GENERATED = { fabrics: ['library_no', 'search_vector', 'is_complete'] };
+const withoutGenerated = (table, rows) =>
+  GENERATED[table]
+    ? rows.map((row) => Object.fromEntries(Object.entries(row).filter(([k]) => !GENERATED[table].includes(k))))
+    : rows;
 
 const load = (table) => JSON.parse(readFileSync(join(dir, `${table}.json`), 'utf8'));
 
@@ -68,7 +78,7 @@ async function main() {
 
   let profileIds = new Set();
   for (const table of TABLES) {
-    let rows = load(table);
+    let rows = withoutGenerated(table, load(table));
     if (table === 'profiles') {
       profileIds = await restoreProfiles(rows);
       console.log(`profiles: ${profileIds.size}/${rows.length}`);

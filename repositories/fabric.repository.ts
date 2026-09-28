@@ -8,8 +8,19 @@ import type {
 } from '@/types/fabric';
 import type { FabricCreateInput, FabricUpdateInput } from '@/features/fabrics/types/fabric.schema';
 import { lookSearch } from '@/lib/config/visual-tags.config';
+import { showcase } from '@/lib/config/app.config';
 
-const FABRIC_WITH_RELATIONS = '*, mill:mills(id, name, slug), images:fabric_images(*), tags:fabric_tags(*)';
+/**
+ * The columns of `Fabric`, named so responses skip search_vector (a large
+ * tsvector nobody reads). Lists leave tags out too: only the fabric page
+ * shows them, and on a page of 24 cards they were most of the payload.
+ */
+export const FABRIC_COLUMNS =
+  'id, mill_id, fabric_code, fabric_name, fabric_type, composition, gsm, width, color, color_family, season, ' +
+  'description, ai_description, suggested_use, extraction_confidence, review_status, is_complete, ' +
+  'created_by, created_at, updated_at';
+const FABRIC_LIST = `${FABRIC_COLUMNS}, mill:mills(id, name, slug), images:fabric_images(*)`;
+const FABRIC_WITH_RELATIONS = `${FABRIC_LIST}, tags:fabric_tags(*)`;
 
 /** All fabric table access goes through this repository. */
 export class FabricRepository {
@@ -44,7 +55,7 @@ export class FabricRepository {
 
     let query = this.db
       .from('fabrics')
-      .select(FABRIC_WITH_RELATIONS + ', mills!inner(slug)', { count: 'exact' });
+      .select(FABRIC_LIST + ', mills!inner(slug)', { count: 'exact' });
 
     if (params.q) {
       const text = params.q.trim();
@@ -109,7 +120,7 @@ export class FabricRepository {
 
     const { data, error: loadError } = await this.db
       .from('fabrics')
-      .select(FABRIC_WITH_RELATIONS)
+      .select(FABRIC_LIST)
       .in('id', rows.map((r) => r.fabric_id));
     if (loadError) throw loadError;
 
@@ -118,6 +129,29 @@ export class FabricRepository {
       .filter((r) => byId.has(r.fabric_id))
       .map((r) => ({ ...byId.get(r.fabric_id)!, match: Math.round(r.score * 100) }));
     return { items, total: Number(rows[0].total), page, pageSize };
+  }
+
+  /**
+   * Home page candidates: complete, fully described fabrics the AI read with
+   * high confidence (rules in appConfig showcase), best first. `!inner`
+   * keeps only fabrics with a photo — the filter matters for staff, who can
+   * otherwise see incomplete records.
+   */
+  async findShowcaseCandidates(): Promise<FabricWithRelations[]> {
+    let query = this.db
+      .from('fabrics')
+      .select(`${FABRIC_COLUMNS}, mill:mills(id, name, slug), images:fabric_images!inner(*)`)
+      .eq('review_status', 'approved')
+      .eq('is_complete', true)
+      .gte('extraction_confidence', showcase.minConfidence);
+    for (const column of showcase.requiredFields) query = query.not(column, 'is', null);
+
+    const { data, error } = await query
+      .order('extraction_confidence', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(showcase.candidates);
+    if (error) throw error;
+    return (data ?? []) as unknown as FabricWithRelations[];
   }
 
   /** End-use tags common enough to offer the AI when reading a buyer's note. */
@@ -147,15 +181,6 @@ export class FabricRepository {
   async delete(id: string): Promise<void> {
     const { error } = await this.db.from('fabrics').delete().eq('id', id);
     if (error) throw error;
-  }
-
-  async countByMill(millId: string): Promise<number> {
-    const { count, error } = await this.db
-      .from('fabrics')
-      .select('id', { count: 'exact', head: true })
-      .eq('mill_id', millId);
-    if (error) throw error;
-    return count ?? 0;
   }
 
   /** Candidate pool for similarity scoring: same type OR overlapping GSM window. */
