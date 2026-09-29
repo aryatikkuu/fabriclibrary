@@ -8,7 +8,7 @@ export const searchConfig = {
     'White', 'Black', 'Grey', 'Blue', 'Green', 'Red', 'Pink',
     'Orange', 'Yellow', 'Brown', 'Purple', 'Multi',
   ],
-  /** Fibre filter (matches the word in the composition). Most-used first. */
+  /** Composition filter (matches the fibre word in the composition). Most-used first. */
   fibres: [
     'Cotton', 'Polyester', 'Elastane', 'Viscose', 'Metallic', 'Wool',
     'Linen', 'Modal', 'Lyocell', 'Nylon', 'Acrylic', 'Bamboo', 'Silk',
