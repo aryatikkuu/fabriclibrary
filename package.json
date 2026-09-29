@@ -19,7 +19,8 @@
     "embed": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/embed-descriptions.mjs",
     "dedupe": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/dedupe-fabrics.mjs",
     "backup": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/backup.mjs",
-    "restore": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/restore.mjs"
+    "restore": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/restore.mjs",
+    "compositions": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/expand-compositions.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

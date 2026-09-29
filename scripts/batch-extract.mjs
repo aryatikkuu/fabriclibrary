@@ -16,6 +16,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, unlinkSync } from
 import { resolve, join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { loadEnv, isImageFile, contentTypeFor, mapPool } from './lib/common.mjs';
+import { readableComposition } from '../features/fabrics/composition.ts';
 import { millsConfig } from '../lib/config/mills.config.ts';
 import {
   FABRIC_EXTRACTION_SYSTEM_PROMPT,
@@ -112,7 +113,7 @@ async function extractOne(imagePath, attempt = 0) {
     fabric_code: parsed.fabric_code || '',
     fabric_name: parsed.fabric_name || '',
     fabric_type: parsed.fabric_type || '',
-    composition: parsed.composition || '',
+    composition: readableComposition(parsed.composition || ''),
     gsm,
     width: parsed.width || '',
     color: parsed.color || '',

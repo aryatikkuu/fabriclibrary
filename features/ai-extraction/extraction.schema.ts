@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { readableComposition } from '@/features/fabrics/composition';
 
 /**
  * Contract for AI output. Nothing enters the database until it passes this
@@ -9,7 +10,8 @@ export const extractionResultSchema = z.object({
   fabric_code: z.string().default(''),
   fabric_name: z.string().default(''),
   fabric_type: z.string().default(''),
-  composition: z.string().default(''),
+  /** Hanger codes ("W/P/ELA 52/43/05") are written out in words so text search finds them. */
+  composition: z.string().default('').transform(readableComposition),
   gsm: z
     .union([z.number(), z.string(), z.null()])
     .transform((v) => {
