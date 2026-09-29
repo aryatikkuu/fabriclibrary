@@ -43,7 +43,7 @@ function NumberField({
   );
 }
 
-const ROW = 'grid grid-cols-2 gap-4 border-y border-seam py-5 md:grid-cols-3 lg:grid-cols-5';
+const ROW = 'grid grid-cols-2 gap-4 border-y border-seam py-5 md:grid-cols-3 lg:grid-cols-6';
 
 const LAYOUTS = {
   /** Full-width band under the search. */
@@ -87,6 +87,10 @@ export function FabricFilters({
         options={toOptions(searchConfig.fabricTypes)} onChange={setParam} />
       <Select name="colorFamily" label="Colour" value={searchParams.get('colorFamily') ?? ''}
         options={toOptions(searchConfig.colorFamilies)} onChange={setParam} />
+      {/* Wide on phones and beside photo search, so the two GSM boxes pair up below it. */}
+      <Select name="composition" label="Fibre" value={searchParams.get('composition') ?? ''}
+        options={toOptions(Object.keys(searchConfig.fibres))} onChange={setParam}
+        className={`col-span-2 md:col-span-1 ${layout === 'beside' ? 'lg:photo-open:col-span-2' : ''}`} />
       <NumberField name="gsmMin" label="GSM min" value={searchParams.get('gsmMin') ?? ''} onChange={setParam} />
       <NumberField name="gsmMax" label="GSM max" value={searchParams.get('gsmMax') ?? ''} onChange={setParam} />
     </div>

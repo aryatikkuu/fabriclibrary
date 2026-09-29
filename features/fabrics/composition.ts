@@ -1,5 +1,6 @@
 // Relative + .ts so scripts (node --experimental-strip-types) can import this too.
 import { fibreCodes } from '../../lib/config/fibres.config.ts';
+import { searchConfig } from '../../lib/config/search.config.ts';
 
 /**
  * Hangers often print the blend as codes: "W/P/ELA 52/43/05". Buyers search
@@ -57,4 +58,17 @@ function readSegment(segment: string): string[][] {
     for (const rest of readSegment(segment.slice(end))) ways.push([head, ...rest]);
   }
   return ways;
+}
+
+/**
+ * The Fibre filter's value as a case-insensitive regular expression for the
+ * composition column (PostgREST imatch; ~* in match_fabrics_by_look, 0013).
+ * A fibre from searchConfig.fibres matches all its spellings ("Cotton" →
+ * cotton or Ctn); any other text is matched literally, so a URL can't send
+ * its own pattern.
+ */
+export function compositionPattern(value: string): string {
+  const spellings = searchConfig.fibres[value];
+  if (spellings) return `(${spellings.join('|')})`;
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

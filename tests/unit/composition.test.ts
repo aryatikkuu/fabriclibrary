@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readableComposition } from '@/features/fabrics/composition';
+import { compositionPattern, readableComposition } from '@/features/fabrics/composition';
 
 describe('readableComposition', () => {
   it.each([
@@ -26,5 +26,17 @@ describe('readableComposition', () => {
     ['C/P/V/ELA', 'no numbers'],
   ])('leaves %s as printed (%s)', (raw) => {
     expect(readableComposition(raw)).toBe(raw);
+  });
+});
+
+describe('compositionPattern', () => {
+  it('turns a fibre choice into every spelling of it', () => {
+    expect(compositionPattern('Cotton')).toBe('(cotton|\\mctn\\M)');
+    expect(compositionPattern('Elastane')).toBe('(elastane|spandex|spndx|lycra)');
+  });
+
+  it('matches anything else literally, so a URL cannot send its own pattern', () => {
+    expect(compositionPattern('(a|.*')).toBe('\\(a\\|\\.\\*');
+    expect(compositionPattern('Pima')).toBe('Pima');
   });
 });
