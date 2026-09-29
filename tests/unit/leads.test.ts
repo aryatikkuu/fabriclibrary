@@ -11,9 +11,10 @@ describe('leadMailto', () => {
     return { to: url.pathname, subject: url.searchParams.get('subject'), body: url.searchParams.get('body') ?? '' };
   };
 
-  it('addresses the draft and puts the fabric code in the subject and body', () => {
-    const { to, subject, body } = decode(leadMailto('pashantikku@gmail.com', { request: 'both', name: 'Ana', email: 'ana@shop.com' }, fabric));
-    expect(to).toBe('pashantikku@gmail.com');
+  it('addresses the draft to every recipient and puts the fabric code in the subject and body', () => {
+    const recipients = ['sales@example.com', 'bot@example.com'];
+    const { to, subject, body } = decode(leadMailto(recipients, { request: 'both', name: 'Ana', email: 'ana@shop.com' }, fabric));
+    expect(to).toBe('sales@example.com,bot@example.com');
     expect(subject).toBe('Swatch and price request – PRXS42488WJ41300');
     expect(body).toContain('Code: PRXS42488WJ41300');
     expect(body).toContain('Mill: Orbit Exports');
@@ -21,7 +22,7 @@ describe('leadMailto', () => {
   });
 
   it('includes only the details given, and survives awkward characters', () => {
-    const { body } = decode(leadMailto('x@y.com', {
+    const { body } = decode(leadMailto(['x@y.com'], {
       request: 'swatch', name: 'José & Co', email: 'j@co.com', whatsapp: '+94 77 123 4567', message: 'Need 3m?\nThanks',
     }, fabric));
     expect(body).toContain('Name: José & Co');

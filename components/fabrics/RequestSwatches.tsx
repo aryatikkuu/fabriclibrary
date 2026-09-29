@@ -19,7 +19,7 @@ interface FabricSummary {
 /**
  * "Request swatches / price" on a fabric page. The buyer fills in who they
  * are; the request is saved as a lead (POST /api/leads), then their email
- * app opens a pre-filled draft to appConfig.contact.email with the fabric
+ * app opens a pre-filled draft to appConfig.leads.to with the fabric
  * code, so they only have to press send. The draft opens even if saving
  * fails. When a WhatsApp number is configured, a chat link with the code
  * already typed sits under the button.
@@ -55,7 +55,7 @@ export function RequestSwatches({ fabric }: { fabric: FabricSummary }) {
       });
       // Invalid details: let them fix it. Anything else (limit, outage): still open the email.
       if (res.status === 400) throw new Error('Please check your name, email and WhatsApp number.');
-      const link = leadMailto(appConfig.contact.email, lead, { ...fabric, url: window.location.href.split('?')[0] });
+      const link = leadMailto(appConfig.leads.to, lead, { ...fabric, url: window.location.href.split('?')[0] });
       setMailto(link);
       window.location.href = link;
     } catch (e) {

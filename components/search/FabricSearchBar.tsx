@@ -9,7 +9,8 @@ import { Reveal } from '@/components/ui/Reveal';
  * Statement search: a full-width technical frame with crosshair corners,
  * serif input at display scale, mono action. With `photoSearch`, a camera
  * button on the frame's edge swaps the text search for search-by-photo in
- * the same frame, and back.
+ * the same frame, and back. `?photo=1` (the homepage card's Continue to
+ * search) opens it on photo search.
  */
 export function FabricSearchBar({
   placeholder = 'Search by code, name, composition, colour…',
@@ -24,7 +25,7 @@ export function FabricSearchBar({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [value, setValue] = useState(searchParams.get('q') ?? '');
-  const [photoOpen, setPhotoOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(photoSearch && searchParams.get('photo') === '1');
   const textInput = useRef<HTMLInputElement>(null);
   const narrow = useNarrowScreen();
 
@@ -44,6 +45,7 @@ export function FabricSearchBar({
     params.delete('look'); // a text search replaces any photo search
     params.delete('lookId');
     params.delete('page');
+    params.delete('photo');
     router.push(`/search?${params.toString()}`);
   }
 

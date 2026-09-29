@@ -16,7 +16,7 @@ export const appConfig = {
    * hide it (except email, which requests are sent to).
    */
   contact: {
-    email: 'pashantikku@gmail.com',
+    email: 'pashan@treta-marketing.com',
     phone: '' as string,
     /** International format, digits only (e.g. 94771234567) — used for wa.me links. */
     whatsapp: '' as string,
@@ -29,10 +29,11 @@ export const appConfig = {
   },
   /**
    * "Request swatches / price" (components/fabrics/RequestSwatches.tsx):
-   * the buyer's email app opens a pre-filled draft to contact.email, and the
-   * request is also saved as a lead (analytics page).
+   * the buyer's email app opens a pre-filled draft addressed to everyone in
+   * `to`, and the request is also saved as a lead (analytics page).
    */
   leads: {
+    to: ['pashan@treta-marketing.com', 'agentic.ai@treta-marketing.com'],
     /** Requests one visitor can save per rolling 24 hours (spam guard). */
     perVisitorPerDay: 10,
   },

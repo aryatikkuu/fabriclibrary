@@ -4,13 +4,16 @@ import { useLookSearch } from './useLookSearch';
 
 /**
  * Homepage hero photo search: a square drop area (the photo fills it once
- * chosen), an optional note and Find similar. Behaviour lives in useLookSearch.
+ * chosen), an optional note, and Continue to search — which opens the search
+ * page with both filled in and the filters beside them, so the buyer can
+ * narrow by mill, weight or colour before searching. Behaviour lives in
+ * useLookSearch.
  */
 export function HeroPhotoCard() {
-  const { preview, note, setNote, busy, error, dragging, submit, dropZone, fileInputProps, openPicker } = useLookSearch();
+  const { preview, note, setNote, error, dragging, continueToSearch, dropZone, fileInputProps, openPicker } = useLookSearch();
 
   return (
-    <form onSubmit={submit} {...dropZone} className="w-full border border-ink bg-paper p-4 sm:p-5">
+    <form onSubmit={continueToSearch} {...dropZone} className="w-full border border-ink bg-paper p-4 sm:p-5">
       <button
         type="button"
         onClick={openPicker}
@@ -50,10 +53,9 @@ export function HeroPhotoCard() {
       />
       <button
         type="submit"
-        disabled={busy}
-        className="mt-3 w-full bg-ink py-3 font-mono text-[10.5px] uppercase tracking-label text-paper transition-opacity hover:opacity-85 disabled:opacity-50"
+        className="mt-3 w-full bg-ink py-3 font-mono text-[10.5px] uppercase tracking-label text-paper transition-opacity hover:opacity-85"
       >
-        {busy ? 'Reading photo…' : 'Find similar'}
+        Continue to search →
       </button>
       {error && <p role="alert" className="mt-3 text-sm text-thread">{error}</p>}
     </form>

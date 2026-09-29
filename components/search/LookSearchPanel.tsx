@@ -8,7 +8,7 @@ import { useLookSearch } from './useLookSearch';
  */
 export function LookSearchPanel({ active, onClose }: { active: boolean; onClose: () => void }) {
   const { preview, note, setNote, busy, error, dragging, submit, dropZone, fileInputProps, openPicker } =
-    useLookSearch({ pasteActive: active, onDone: onClose });
+    useLookSearch({ pasteActive: active, takeHandoff: true, onDone: onClose });
 
   return (
     // Sits inside the search bar's frame (FabricSearchBar), in place of the text search.

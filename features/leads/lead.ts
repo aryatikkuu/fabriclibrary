@@ -25,7 +25,7 @@ export const leadSchema = z.object({
 export type LeadInput = z.infer<typeof leadSchema>;
 
 /** mailto: link that opens the buyer's email app with the request written out. */
-export function leadMailto(to: string, lead: Omit<LeadInput, 'fabricId' | 'website'>, fabric: {
+export function leadMailto(to: readonly string[], lead: Omit<LeadInput, 'fabricId' | 'website'>, fabric: {
   code: string | null; name: string | null; mill: string | null; url: string;
 }): string {
   const label = fabric.code ?? fabric.name ?? 'fabric';
@@ -48,5 +48,5 @@ export function leadMailto(to: string, lead: Omit<LeadInput, 'fabricId' | 'websi
     'Thank you',
   ].filter((line): line is string => typeof line === 'string').join('\n');
   const subject = `${LEAD_REQUESTS[lead.request]} request – ${label}`;
-  return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return `mailto:${to.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }

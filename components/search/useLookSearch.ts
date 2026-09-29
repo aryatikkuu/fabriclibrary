@@ -21,20 +21,32 @@ async function shrink(file: Blob): Promise<Blob> {
 }
 
 /**
+ * A photo and note carried from the homepage card to the search page's photo
+ * panel (continueToSearch → takeHandoff). Plain module state: it only has to
+ * survive a client-side navigation, and nothing is uploaded until the buyer
+ * presses Find similar there.
+ */
+let handoff: { photo: Blob | null; note: string } | null = null;
+
+/**
  * Photo search behaviour shared by every photo-search layout (the search
  * bar's panel, the homepage card): pick / drop / paste a photo, an optional
  * note, and submit — one API call turns them into tags, which go into the URL
  * (?look=…&lookId=…) so the search page ranks the library from there.
  *
  * `pasteActive`: listen for pasted photos only while the layout is showing.
+ * `takeHandoff`: start with the photo and note the homepage card passed on.
  */
-export function useLookSearch({ pasteActive = true, onDone }: { pasteActive?: boolean; onDone?: () => void } = {}) {
+export function useLookSearch({ pasteActive = true, takeHandoff = false, onDone }: {
+  pasteActive?: boolean; takeHandoff?: boolean; onDone?: () => void;
+} = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fileInput = useRef<HTMLInputElement>(null);
-  const [photo, setPhoto] = useState<Blob | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [note, setNote] = useState('');
+  const [start] = useState(() => (takeHandoff ? handoff : null));
+  const [photo, setPhoto] = useState<Blob | null>(start?.photo ?? null);
+  const [preview, setPreview] = useState<string | null>(() => (start?.photo ? URL.createObjectURL(start.photo) : null));
+  const [note, setNote] = useState(start?.note ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -56,6 +68,8 @@ export function useLookSearch({ pasteActive = true, onDone }: { pasteActive?: bo
     return () => window.removeEventListener('paste', onPaste);
   }, [pasteActive]);
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+  // Cleared after mounting (not while reading it), so React's dev double-render still sees it.
+  useEffect(() => { if (takeHandoff) handoff = null; }, [takeHandoff]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -77,6 +91,7 @@ export function useLookSearch({ pasteActive = true, onDone }: { pasteActive?: bo
       else params.delete('lookId');
       params.delete('q');
       params.delete('page');
+      params.delete('photo');
       router.push(`/search?${params.toString()}`);
       onDone?.();
     } catch (e) {
@@ -84,6 +99,18 @@ export function useLookSearch({ pasteActive = true, onDone }: { pasteActive?: bo
     } finally {
       setBusy(false);
     }
+  }
+
+  /**
+   * Homepage card: instead of searching straight away, open the search page
+   * with photo search showing, this photo and note filled in, and the
+   * filters beside it (?photo=1, read by FabricSearchBar).
+   */
+  function continueToSearch(event: React.FormEvent) {
+    event.preventDefault();
+    if (!photo && !note.trim()) return setError('Add a photo or describe what you need.');
+    handoff = { photo, note: note.trim() };
+    router.push('/search?photo=1');
   }
 
   /** Spread onto the form: dropping a photo anywhere on it picks it. */
@@ -100,7 +127,7 @@ export function useLookSearch({ pasteActive = true, onDone }: { pasteActive?: bo
   } as const;
 
   return {
-    preview, note, setNote, busy, error, dragging, submit, dropZone, fileInputProps,
+    preview, note, setNote, busy, error, dragging, submit, continueToSearch, dropZone, fileInputProps,
     openPicker: () => fileInput.current?.click(),
   };
 }
