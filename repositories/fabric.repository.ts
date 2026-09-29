@@ -9,7 +9,6 @@ import type {
 import type { FabricCreateInput, FabricUpdateInput } from '@/features/fabrics/types/fabric.schema';
 import { lookSearch } from '@/lib/config/visual-tags.config';
 import { showcase } from '@/lib/config/app.config';
-import { compositionPattern } from '@/features/fabrics/composition';
 
 /**
  * The columns of `Fabric`, named so responses skip search_vector (a large
@@ -67,7 +66,7 @@ export class FabricRepository {
     if (params.millSlug) query = query.eq('mills.slug', params.millSlug);
     if (params.fabricType) query = query.ilike('fabric_type', params.fabricType);
     if (params.colorFamily) query = query.ilike('color_family', params.colorFamily);
-    if (params.composition) query = query.filter('composition', 'imatch', compositionPattern(params.composition));
+    if (params.composition) query = query.ilike('composition', `%${params.composition}%`);
     if (params.gsmMin != null) query = query.gte('gsm', params.gsmMin);
     if (params.gsmMax != null) query = query.lte('gsm', params.gsmMax);
     if (params.reviewStatus) query = query.eq('review_status', params.reviewStatus);
@@ -106,7 +105,7 @@ export class FabricRepository {
       p_mill_slug: params.millSlug ?? null,
       p_fabric_type: params.fabricType ?? null,
       p_color_family: params.colorFamily ?? null,
-      p_composition: params.composition ? compositionPattern(params.composition) : null,
+      p_composition: params.composition ?? null,
       p_gsm_min: params.gsmMin ?? null,
       p_gsm_max: params.gsmMax ?? null,
       p_review_status: params.reviewStatus ?? null,

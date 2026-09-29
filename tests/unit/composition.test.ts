@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { compositionPattern, readableComposition } from '@/features/fabrics/composition';
+import { readableComposition } from '@/features/fabrics/composition';
 
 describe('readableComposition', () => {
   it.each([
@@ -11,12 +11,16 @@ describe('readableComposition', () => {
     ['P/VELA 62/33/05', '62% Polyester, 33% Viscose, 5% Elastane'],
     ['C/ELA 97%/03', '97% Cotton, 3% Elastane'],
     ['W/P/N/El = 39/32/25/04', '39% Wool, 32% Polyester, 25% Nylon, 4% Elastane'],
+    ['65%Ctn 35%Poly', '65%Cotton 35%Polyester'], // other spellings → one word per fibre
+    ['97% Cotton 3% Spandex', '97% Cotton 3% Elastane'],
+    ['80% Cotton 20% Rec Poly', '80% Cotton 20% Rec Polyester'],
   ])('writes out %s', (raw, expected) => {
     expect(readableComposition(raw)).toBe(expected);
   });
 
   it.each([
     ['60% Cotton 40% Modal', 'already in words'],
+    ['100% Polyester', 'Poly is only replaced as a whole word'],
     ['P/W/EL 63/43/03', 'adds up to 109'],
     ['PV/ELIA 76/23/0', 'a 0 — a digit was cut off'],
     ['W/P/ELA 51/47', 'a number missing'],
@@ -26,17 +30,5 @@ describe('readableComposition', () => {
     ['C/P/V/ELA', 'no numbers'],
   ])('leaves %s as printed (%s)', (raw) => {
     expect(readableComposition(raw)).toBe(raw);
-  });
-});
-
-describe('compositionPattern', () => {
-  it('turns a fibre choice into every spelling of it', () => {
-    expect(compositionPattern('Cotton')).toBe('(cotton|\\mctn\\M)');
-    expect(compositionPattern('Elastane')).toBe('(elastane|spandex|spndx|lycra)');
-  });
-
-  it('matches anything else literally, so a URL cannot send its own pattern', () => {
-    expect(compositionPattern('(a|.*')).toBe('\\(a\\|\\.\\*');
-    expect(compositionPattern('Pima')).toBe('Pima');
   });
 });

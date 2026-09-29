@@ -41,3 +41,19 @@ export const fibreCodes: Record<string, string> = {
   LY: 'Elastane',
   SP: 'Elastane',
 };
+
+/**
+ * Other ways labels write a fibre in words, and the one word the library
+ * uses. Compositions are saved with the standard word, so a search or the
+ * Fibre filter for "Cotton" also finds labels that said "Ctn".
+ */
+export const fibreSpellings: Record<string, string> = {
+  Ctn: 'Cotton',
+  Poly: 'Polyester',
+  Spandex: 'Elastane',
+  Spndx: 'Elastane',
+  Lycra: 'Elastane',
+  Rayon: 'Viscose',
+  Tencel: 'Lyocell',
+  Polyamide: 'Nylon',
+};

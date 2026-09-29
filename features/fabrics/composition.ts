@@ -1,21 +1,36 @@
 // Relative + .ts so scripts (node --experimental-strip-types) can import this too.
-import { fibreCodes } from '../../lib/config/fibres.config.ts';
-import { searchConfig } from '../../lib/config/search.config.ts';
+import { fibreCodes, fibreSpellings } from '../../lib/config/fibres.config.ts';
 
 /**
- * Hangers often print the blend as codes: "W/P/ELA 52/43/05". Buyers search
- * for words ("wool"), so these are written out in full:
- *   "W/P/ELA 52/43/05"  →  "52% Wool, 43% Polyester, 5% Elastane"
- *
+ * Compositions are saved the way buyers search for them:
+ *   - hanger codes written out: "W/P/ELA 52/43/05" → "52% Wool, 43% Polyester, 5% Elastane"
+ *   - one word per fibre: "65% Ctn 35% Poly" → "65% Cotton 35% Polyester"
+ *     (fibreSpellings in lib/config/fibres.config.ts)
+ * Runs on every import (extraction schema) and over the library with
+ * `npm run compositions`.
+ */
+export function readableComposition(raw: string): string {
+  return standardSpellings(writeOutCodes(raw));
+}
+
+/** Other spellings of a fibre ("Ctn", "Spandex") → the library's word. Whole words only. */
+function standardSpellings(text: string): string {
+  return text.replace(/[A-Za-z]+/g, (word) => {
+    const match = Object.keys(fibreSpellings).find((k) => k.toLowerCase() === word.toLowerCase());
+    return match ? fibreSpellings[match] : word;
+  });
+}
+
+/**
  * Deliberately strict — the result replaces what the label said, so it must
- * be right. A composition is converted only when
+ * be right. Codes are written out only when
  *   - it is codes followed by numbers and nothing else,
  *   - every code is in lib/config/fibres.config.ts, each fibre named once,
  *   - there is exactly one number per fibre, none of them 0 (a cut-off digit), and
  *   - the numbers add up to 100 (±3, for labels that round).
  * Anything else (already in words, typos, unknown codes) comes back as it was.
  */
-export function readableComposition(raw: string): string {
+function writeOutCodes(raw: string): string {
   const parts = raw.trim().match(/^([A-Za-z][A-Za-z\s/,\-]*?)\s*[:=]?\s*\(?\s*(\d+(?:\s*%?\s*[/,\-]\s*\d+)+)\s*%?\s*\)?$/);
   if (!parts) return raw;
 
@@ -58,17 +73,4 @@ function readSegment(segment: string): string[][] {
     for (const rest of readSegment(segment.slice(end))) ways.push([head, ...rest]);
   }
   return ways;
-}
-
-/**
- * The Fibre filter's value as a case-insensitive regular expression for the
- * composition column (PostgREST imatch; ~* in match_fabrics_by_look, 0013).
- * A fibre from searchConfig.fibres matches all its spellings ("Cotton" →
- * cotton or Ctn); any other text is matched literally, so a URL can't send
- * its own pattern.
- */
-export function compositionPattern(value: string): string {
-  const spellings = searchConfig.fibres[value];
-  if (spellings) return `(${spellings.join('|')})`;
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
