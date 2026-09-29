@@ -44,6 +44,14 @@ const mills = [
     country: 'India',
     is_active: true,
   },
+  {
+    // Fabrics from mills TMS doesn't represent, shown without their mill's name.
+    name: 'Extended Range',
+    slug: 'extended-range',
+    description: 'Further qualities from other mills, sourced on request.',
+    country: 'Various mills',
+    is_active: true,
+  },
 ];
 
 

@@ -93,6 +93,9 @@ Skipping step 3 or 4 leaves fabrics that browse fine but **never appear in photo
 **Photos:** one hanger per photo, label readable and in focus, JPEG/PNG/WebP. Put each mill's photos in
 their own folder. The mill must already exist (`lib/config/mills.config.ts`, then `npm run db:seed`).
 
+**Fabrics from mills TMS doesn't represent** go under the `extended-range` mill ("Extended Range" on the
+site), so the real mill is never shown. Check the saved names and descriptions don't mention it either.
+
 | # | Command | API calls | Writes | Cost (approx.) |
 |---|---|---|---|---|
 | 1 | `npm run backup` | — | `backups/<date>/` | free |

@@ -11,5 +11,8 @@ insert into public.mills (name, slug, description, country) values
    'India'),
   ('Orbit Exports', 'orbit-exports',
    'Specialist in novelty wovens — jacquards, satins, lurex and occasionwear qualities.',
-   'India')
+   'India'),
+  ('Extended Range', 'extended-range',
+   'Further qualities from other mills, sourced on request.',
+   'Various mills')
 on conflict (slug) do nothing;

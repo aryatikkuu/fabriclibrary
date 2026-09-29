@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
 import { getCurrentProfile } from '@/lib/api-helpers';
 import { roleCan } from '@/lib/config/roles.config';
+import { isPartnerMill } from '@/lib/config/mills.config';
 import { EditorialLayout } from '@/components/layout/EditorialLayout';
 import { HeroPhotoCard } from '@/components/search/HeroPhotoCard';
 import { MillSection } from '@/components/mills/MillSection';
@@ -28,6 +29,7 @@ export default async function HomePage() {
   ]);
 
   const totalFabrics = mills.reduce((sum, mill) => sum + mill.fabricCount, 0);
+  const partnerMills = mills.filter((mill) => isPartnerMill(mill.slug) && mill.fabricCount > 0).length;
 
   return (
     <EditorialLayout>
@@ -42,7 +44,7 @@ export default async function HomePage() {
           </h1>
           <p className="mt-8 max-w-md text-base leading-relaxed text-graphite">
             Photograph a hanger, a garment or a swatch — we&rsquo;ll match it against {totalFabrics} qualities
-            from {mills.length} mills.
+            from {partnerMills} partner mills and beyond.
           </p>
           <Link href="/search" className="t-label mt-8 inline-flex items-center gap-2 hover:text-ink">
             Know the code? Search by code, name or colour <Arrow />
