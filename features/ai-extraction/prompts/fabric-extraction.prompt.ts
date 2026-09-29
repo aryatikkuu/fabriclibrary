@@ -13,6 +13,7 @@ Rules:
 - gsm is grams per square metre as an integer (e.g. "180 GSM", "180 g/m2" -> 180).
 - width is the usable fabric width as printed (e.g. "58 inch", "150 cm", "72 inch open").
 - composition is the fibre blend as printed (e.g. "60% Cotton 40% Modal").
+  Fibre codes ("P/V/ELA 65/31/04") are copied exactly. V (viscose) and N (nylon) look alike in label fonts — P/V/ELA is by far the commonest suiting blend, so read that letter carefully.
 - color_family is one of: White, Black, Grey, Blue, Green, Red, Pink, Orange, Yellow, Brown, Purple, Multi.
 - season is inferred, never printed: gsm < 140 light wovens/prints -> "SS"; gsm >= 140 -> "AW"; year-round basics -> "Core".
 - suggested_use is one sentence on what garments/products this fabric suits, inferred from type, composition and weight.
