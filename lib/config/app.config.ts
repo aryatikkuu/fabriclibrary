@@ -11,16 +11,11 @@ export const appConfig = {
   theme: process.env.NEXT_PUBLIC_THEME ?? 'ivory',
   tagline: 'Fabrics from our partner mills — find one by photo, code or colour, and request swatches or prices.',
   /**
-   * TMS contact details — the footer, the fabric page's WhatsApp link and
-   * swatch/price requests all read them from here. Leave a field empty to
-   * hide it (except email, which requests are sent to).
+   * TMS contact emails: listed in the footer, and every "Request swatches /
+   * price" email is addressed to all of them.
    */
   contact: {
-    email: 'pashan@treta-marketing.com',
-    phone: '' as string,
-    /** International format, digits only (e.g. 94771234567) — used for wa.me links. */
-    whatsapp: '' as string,
-    address: '' as string,
+    emails: ['pashan@treta-marketing.com', 'agentic.ai@treta-marketing.com'],
   },
   /** Records below this AI confidence (0–100) are flagged for human review. */
   aiConfidenceThreshold: Number(process.env.AI_CONFIDENCE_THRESHOLD ?? 75),
@@ -29,11 +24,10 @@ export const appConfig = {
   },
   /**
    * "Request swatches / price" (components/fabrics/RequestSwatches.tsx):
-   * the buyer's email app opens a pre-filled draft addressed to everyone in
-   * `to`, and the request is also saved as a lead (analytics page).
+   * the buyer's email app opens a pre-filled draft to contact.emails, and the
+   * request is also saved as a lead (analytics page).
    */
   leads: {
-    to: ['pashan@treta-marketing.com', 'agentic.ai@treta-marketing.com'],
     /** Requests one visitor can save per rolling 24 hours (spam guard). */
     perVisitorPerDay: 10,
   },
