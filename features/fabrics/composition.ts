@@ -31,7 +31,7 @@ function standardSpellings(text: string): string {
  * Anything else (already in words, typos, unknown codes) comes back as it was.
  */
 function writeOutCodes(raw: string): string {
-  const parts = raw.trim().match(/^([A-Za-z][A-Za-z\s/,\-]*?)\s*[:=]?\s*\(?\s*(\d+(?:\s*%?\s*[/,\-]\s*\d+)+)\s*%?\s*\)?$/);
+  const parts = raw.trim().match(/^([A-Za-z][A-Za-z\s:/,\-]*?)\s*[:=]?\s*\(?\s*(\d+(?:\s*%?\s*[:/,\-]\s*\d+)+)\s*%?\s*\)?$/);
   if (!parts) return raw;
 
   const percents = parts[2].split(/[^\d]+/).filter(Boolean).map(Number);
@@ -39,7 +39,7 @@ function writeOutCodes(raw: string): string {
   if (Math.abs(total - 100) > 3 || percents.includes(0)) return raw;
 
   // Spaces inside the codes are scanning noise ("EL A", "W/P ELA"); slashes are real.
-  const segments = parts[1].replace(/\s+/g, '').split(/[/,\-]+/).filter(Boolean);
+  const segments = parts[1].replace(/\s+/g, '').split(/[:/,\-]+/).filter(Boolean);
   const fibres = splitSegments(segments.map((s) => s.toUpperCase()), percents.length);
   if (!fibres) return raw;
 

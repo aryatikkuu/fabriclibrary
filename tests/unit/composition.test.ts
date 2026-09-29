@@ -11,6 +11,9 @@ describe('readableComposition', () => {
     ['P/VELA 62/33/05', '62% Polyester, 33% Viscose, 5% Elastane'],
     ['C/ELA 97%/03', '97% Cotton, 3% Elastane'],
     ['W/P/N/El = 39/32/25/04', '39% Wool, 32% Polyester, 25% Nylon, 4% Elastane'],
+    ['COTTON:Elastane / 97:3', '97% Cotton, 3% Elastane'], // mill ticket style: words, then ratio
+    ['COTTON : VISCOSE / 57:43', '57% Cotton, 43% Viscose'],
+    ['LIN:COT-80:20', '80% Linen, 20% Cotton'],
     ['65%Ctn 35%Poly', '65%Cotton 35%Polyester'], // other spellings → one word per fibre
     ['97% Cotton 3% Spandex', '97% Cotton 3% Elastane'],
     ['80% Cotton 20% Rec Poly', '80% Cotton 20% Rec Polyester'],

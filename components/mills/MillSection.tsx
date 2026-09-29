@@ -9,7 +9,10 @@ import { SectionHeading } from '@/components/ui/SectionHeading';
  * the Extended Range isn't counted as a partner.
  */
 export function MillSection({ mills }: { mills: MillWithCount[] }) {
-  const shown = mills.filter((mill) => mill.fabricCount > 0);
+  // Partners first (already A–Z), the Extended Range last.
+  const shown = mills
+    .filter((mill) => mill.fabricCount > 0)
+    .sort((a, b) => Number(!isPartnerMill(a.slug)) - Number(!isPartnerMill(b.slug)));
   const partners = shown.filter((mill) => isPartnerMill(mill.slug)).length;
 
   return (
