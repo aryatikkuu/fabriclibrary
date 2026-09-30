@@ -59,7 +59,7 @@ export function LookSearchPanel({ active, onClose }: { active: boolean; onClose:
             disabled={busy}
             className="bg-ink px-5 py-2.5 font-mono text-[10.5px] uppercase tracking-label text-paper transition-opacity hover:opacity-85 disabled:opacity-50"
           >
-            {busy ? 'Reading photo…' : 'Find similar'}
+            {busy ? 'Analysing image…' : 'Find similar'}
           </button>
           {error && <span role="alert" className="basis-full text-sm text-thread">{error}</span>}
         </div>
