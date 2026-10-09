@@ -35,6 +35,7 @@ export async function readLook(options: {
   const { parsed } = await openAiChatJson({
     model: LOOK_MODEL,
     maxTokens: 1500,
+    flex: true, // half price; same tags, ranks, label reads and speed on a 24-photo benchmark
     messages: [{
       role: 'user',
       content: [

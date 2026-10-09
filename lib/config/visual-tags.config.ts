@@ -66,8 +66,8 @@ export const lookSearch = {
   embeddingModel: 'text-embedding-3-small',
   /**
    * Photo searches allowed per rolling 24 hours (migration 0009). Each costs
-   * about 0.14¢, so `allNonAdmin` is the most photo search can cost a day
-   * (300 ≈ $0.42). Admins are unlimited. Enforced in the database, not here.
+   * about 0.07¢ (flex tier; 0.14¢ when OpenAI is busy), so `allNonAdmin` is
+   * the most photo search can cost a day (300 ≈ $0.21–0.42). Admins are unlimited. Enforced in the database, not here.
    */
   limits: {
     perVisitor: 10,

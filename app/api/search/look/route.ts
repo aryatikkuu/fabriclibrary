@@ -17,7 +17,7 @@ let useTagCache: { tags: string[]; at: number } | null = null;
 
 /**
  * POST /api/search/look — open to everyone, within daily limits (each call
- * costs ~0.14¢; limits in lookSearch.limits, enforced by claim_look_search).
+ * costs ~0.07¢ on OpenAI's flex tier; limits in lookSearch.limits, enforced by claim_look_search).
  * Multipart fields: image (optional), note (optional, "for summer shirts").
  * Returns { look, description, lookId, code }; the search page ranks fabrics from
  * `look` plus the description embedding stored under `lookId`. `code` is set only

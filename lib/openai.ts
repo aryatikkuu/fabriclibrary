@@ -14,16 +14,21 @@ interface ChatMessage {
 /**
  * Thin wrapper over the OpenAI Chat Completions API.
  * Centralised so the model, retries and JSON handling live in one place.
+ *
+ * `flex`: use OpenAI's flex tier, which is half price with the same model and
+ * answers. When OpenAI is busy it refuses with 429 (not charged), and the
+ * call is then sent once more at the standard price instead of failing.
  */
 export async function openAiChatJson(options: {
   messages: ChatMessage[];
   model?: string;
   maxTokens?: number;
+  flex?: boolean;
 }): Promise<{ raw: string; parsed: unknown }> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new ExtractionError('OPENAI_API_KEY is not configured');
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const send = (flex: boolean) => fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -35,8 +40,12 @@ export async function openAiChatJson(options: {
       temperature: 0,
       response_format: { type: 'json_object' },
       messages: options.messages,
+      ...(flex && { service_tier: 'flex' }),
     }),
   });
+
+  let response = await send(!!options.flex);
+  if (options.flex && response.status === 429) response = await send(false);
 
   if (!response.ok) {
     const body = await response.text().catch(() => '');
