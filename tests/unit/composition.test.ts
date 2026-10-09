@@ -14,6 +14,7 @@ describe('readableComposition', () => {
     ['COTTON:Elastane / 97:3', '97% Cotton, 3% Elastane'], // mill ticket style: words, then ratio
     ['COTTON : VISCOSE / 57:43', '57% Cotton, 43% Viscose'],
     ['LIN:COT-80:20', '80% Linen, 20% Cotton'],
+    ['80% LYO, 10% VIS, 10% COT', '80% Lyocell, 10% Viscose, 10% Cotton'],
     ['65%Ctn 35%Poly', '65%Cotton 35%Polyester'], // other spellings → one word per fibre
     ['97% Cotton 3% Spandex', '97% Cotton 3% Elastane'],
     ['80% Cotton 20% Rec Poly', '80% Cotton 20% Rec Polyester'],

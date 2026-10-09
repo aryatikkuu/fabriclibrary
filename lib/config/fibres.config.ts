@@ -61,6 +61,9 @@ export const fibreCodes: Record<string, string> = {
  */
 export const fibreSpellings: Record<string, string> = {
   Ctn: 'Cotton',
+  Cot: 'Cotton',
+  Vis: 'Viscose',
+  Lyo: 'Lyocell',
   Poly: 'Polyester',
   Spandex: 'Elastane',
   Spndx: 'Elastane',
