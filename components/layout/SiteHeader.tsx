@@ -18,10 +18,9 @@ import { CartLink } from '@/components/cart/CartLink';
 export async function SiteHeader() {
   const profile = await getCurrentProfile();
 
-  const items: NavItem[] = [
-    ...primaryNav.filter((item) => !item.permission || roleCan(profile?.role, item.permission)),
-    profile ? signOutNav : signInNav,
-  ];
+  const pages: NavItem[] = primaryNav.filter((item) => !item.permission || roleCan(profile?.role, item.permission));
+  const account = profile ? signOutNav : signInNav;
+  const bar = 'hidden items-center gap-7 font-mono text-[10.5px] uppercase tracking-label text-graphite md:flex';
 
   return (
     <header className="sticky top-0 z-40 border-b border-seam bg-paper-veil backdrop-blur">
@@ -32,16 +31,18 @@ export async function SiteHeader() {
           <span className="t-label truncate">{appConfig.brand.product}</span>
         </Link>
 
+        {/* Desktop: pages, cart, then sign in/out. Phones: the cart beside MobileNav. */}
         <div className="flex shrink-0 items-center gap-5 md:gap-7">
-          {/* Desktop: inline bar. Hidden below md, where MobileNav takes over. */}
-          <nav className="hidden items-center gap-7 font-mono text-[10.5px] uppercase tracking-label text-graphite md:flex">
-            {items.map((item) => (
+          <nav className={bar}>
+            {pages.map((item) => (
               <NavLink key={item.href} item={item} variant="bar" />
             ))}
           </nav>
-          {/* Every size: the cart stays beside the menu on phones. */}
           <CartLink />
-          <MobileNav items={items} />
+          <div className={bar}>
+            <NavLink item={account} variant="bar" />
+          </div>
+          <MobileNav items={[...pages, account]} />
         </div>
       </div>
     </header>
