@@ -158,7 +158,7 @@ add a photo to Storage; attach it to a fabric and run steps 3–5 for it to be s
 | Review queue (approve / reject / re-run AI) | ✅ | ✅ | — |
 | Delete fabrics | ✅ | — | — |
 | Manage mills & users | ✅ | — | — |
-| Request swatches / price | ✅ | ✅ | ✅ (10/day) |
+| Cart → request swatches / price | ✅ | ✅ | ✅ (60 fabrics/day) |
 | Analytics (views, requests, leads) | ✅ | — | — |
 
 ## Security
@@ -168,7 +168,7 @@ add a photo to Storage; attach it to a fabric and run steps 3–5 for it to be s
 - **Uploads** (`lib/images.ts`): only JPEG, PNG and WebP, recognised from the file's bytes rather than its claimed type, with a size cap; storage paths are built from sanitised segments only (`lib/config/storage.config.ts`).
 - **AI output is untrusted**: tags must come from the fixed vocabulary, the description is cleaned to one plain line, and the customer's note is passed as quoted data, never instructions. Results pages read a search's description and embedding from the database by id, so a crafted URL can't trigger an AI call or show made-up text.
 - **Security headers** on every response (`next.config.mjs`): a Content-Security-Policy allowing only this site and Supabase, no framing, `nosniff`, HSTS, strict referrer and permissions policies.
-- **Leads and page views** (migration 0011) are written only by server code and readable only by admins. "Request swatches / price" saves the request (`/api/leads`: validated, 10/day per visitor, bot honeypot) and opens the buyer's email app with a pre-filled draft to every address in `appConfig.contact.emails` (pashan@ and agentic.ai@treta-marketing.com), which the footer also lists. Views count once per fabric, per visitor, per day; staff and bots aren't counted. See `/analytics`.
+- **Leads and page views** (migration 0011) are written only by server code and readable only by admins. Buyers add fabrics to a **cart** (kept in their browser's localStorage, `features/cart/cart.ts`; up to 20 fabrics), then "Request swatches / price" on `/cart` saves one lead per fabric (`/api/leads`: validated, 60 fabrics/day per visitor, bot honeypot) and opens the buyer's email app with one pre-filled draft listing every fabric, to every address in `appConfig.contact.emails` (pashan@ and agentic.ai@treta-marketing.com), which the footer also lists. Views count once per fabric, per visitor, per day; staff and bots aren't counted. See `/analytics`.
 - **Secrets** (`SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `N8N_WEBHOOK_SECRET`) are server-only; nothing secret uses the `NEXT_PUBLIC_` prefix.
 - Tests: `tests/unit/security.test.ts`. Accounts are created by an admin — keep "Allow new users to sign up" off in Supabase.
 

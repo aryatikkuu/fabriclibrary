@@ -11,7 +11,7 @@ import { EditorialLayout } from '@/components/layout/EditorialLayout';
 import { FabricHero } from '@/components/fabrics/FabricHero';
 import { FabricTechnicalData } from '@/components/fabrics/FabricTechnicalData';
 import { SimilarFabrics } from '@/components/fabrics/SimilarFabrics';
-import { RequestSwatches } from '@/components/fabrics/RequestSwatches';
+import { AddToCart } from '@/components/cart/AddToCart';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ConfidenceBadge } from '@/components/ui/ConfidenceBadge';
 
@@ -38,6 +38,7 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
     recordFabricView(fabric.id, isStaff),
   ]);
 
+  const primaryImage = fabric.images?.find((image) => image.is_primary) ?? fabric.images?.[0];
   const galleryImages = (fabric.images ?? []).filter((image) => !image.is_primary);
 
   return (
@@ -86,8 +87,14 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
             {fabric.fabric_name?.trim() || 'Unnamed quality'}
           </h1>
 
-          <RequestSwatches
-            fabric={{ id: fabric.id, code: fabric.fabric_code, name: fabric.fabric_name, mill: fabric.mill?.name ?? null }}
+          <AddToCart
+            fabric={{
+              id: fabric.id,
+              code: fabric.fabric_code,
+              name: fabric.fabric_name,
+              mill: fabric.mill?.name ?? null,
+              image: primaryImage?.public_url ?? null,
+            }}
           />
 
           {(fabric.description || fabric.ai_description) && (

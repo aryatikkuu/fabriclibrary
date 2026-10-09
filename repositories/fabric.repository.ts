@@ -37,6 +37,13 @@ export class FabricRepository {
     return data as unknown as FabricWithRelations;
   }
 
+  /** Code and mill of each fabric the caller can see; ids it can't see are left out. */
+  async findRefs(ids: string[]): Promise<Pick<Fabric, 'id' | 'fabric_code' | 'mill_id'>[]> {
+    const { data, error } = await this.db.from('fabrics').select('id, fabric_code, mill_id').in('id', ids);
+    if (error) throw error;
+    return data ?? [];
+  }
+
   async findByCode(fabricCode: string): Promise<FabricWithRelations | null> {
     const { data, error } = await this.db
       .from('fabrics')

@@ -38,6 +38,15 @@ const config: Config = {
       maxWidth: {
         site: '1440px',
       },
+      // Adding to the cart: the header count pops, the button's tick draws itself.
+      keyframes: {
+        pop: { '0%, 100%': { transform: 'scale(1)' }, '40%': { transform: 'scale(1.45)' } },
+        draw: { from: { strokeDashoffset: '24' }, to: { strokeDashoffset: '0' } },
+      },
+      animation: {
+        pop: 'pop 450ms ease-out',
+        draw: 'draw 350ms ease-out both',
+      },
     },
   },
   plugins: [

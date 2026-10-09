@@ -25,6 +25,10 @@ export class FabricService {
     return this.fabrics.findById(id);
   }
 
+  getRefs(ids: string[]) {
+    return this.fabrics.findRefs(ids);
+  }
+
   search(params: FabricSearchParams): Promise<Paginated<FabricWithRelations>> {
     return this.fabrics.search(params);
   }

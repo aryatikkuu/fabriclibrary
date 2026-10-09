@@ -1,8 +1,10 @@
 import { z } from 'zod';
+import { appConfig } from '@/lib/config/app.config';
 
 /**
- * "Request swatches / price": what a buyer submits (validated by
- * app/api/leads) and the email draft their mail app opens with.
+ * "Request swatches / price" for the fabrics in the cart: what a buyer
+ * submits (validated by app/api/leads) and the email draft their mail app
+ * opens with.
  */
 
 export const LEAD_REQUESTS = { swatch: 'Swatch', price: 'Price', both: 'Swatch and price' } as const;
@@ -12,7 +14,7 @@ const optional = (max: number) =>
   z.string().trim().max(max).optional().transform((v) => (v ? v : undefined));
 
 export const leadSchema = z.object({
-  fabricId: z.string().uuid(),
+  fabricIds: z.array(z.string().uuid()).min(1).max(appConfig.leads.maxCart),
   request: z.enum(['swatch', 'price', 'both']),
   name: z.string().trim().min(1).max(100),
   email: z.string().trim().email().max(200),
@@ -24,20 +26,29 @@ export const leadSchema = z.object({
 });
 export type LeadInput = z.infer<typeof leadSchema>;
 
+export interface LeadFabric {
+  code: string | null;
+  name: string | null;
+  mill: string | null;
+  url: string;
+}
+
 /** mailto: link that opens the buyer's email app with the request written out. */
-export function leadMailto(to: readonly string[], lead: Omit<LeadInput, 'fabricId' | 'website'>, fabric: {
-  code: string | null; name: string | null; mill: string | null; url: string;
-}): string {
-  const label = fabric.code ?? fabric.name ?? 'fabric';
+export function leadMailto(
+  to: readonly string[],
+  lead: Omit<LeadInput, 'fabricIds' | 'website'>,
+  fabrics: LeadFabric[],
+): string {
   const wants = { swatch: 'a swatch', price: 'pricing', both: 'a swatch and pricing' }[lead.request];
+  const listed = fabrics.flatMap((fabric, i) => [
+    `${i + 1}. ${[fabric.code ?? 'No code', fabric.name, fabric.mill].filter(Boolean).join(' — ')}`,
+    `   ${fabric.url}`,
+  ]);
   const body = [
     'Hello,',
     '',
-    `I'd like ${wants} for this fabric:`,
-    `Code: ${fabric.code ?? '—'}`,
-    fabric.name && `Name: ${fabric.name}`,
-    fabric.mill && `Mill: ${fabric.mill}`,
-    `Link: ${fabric.url}`,
+    `I'd like ${wants} for ${fabrics.length === 1 ? 'this fabric' : `these ${fabrics.length} fabrics`}:`,
+    ...listed,
     '',
     `Name: ${lead.name}`,
     lead.company && `Company: ${lead.company}`,
@@ -47,6 +58,7 @@ export function leadMailto(to: readonly string[], lead: Omit<LeadInput, 'fabricI
     '',
     'Thank you',
   ].filter((line): line is string => typeof line === 'string').join('\n');
-  const subject = `${LEAD_REQUESTS[lead.request]} request – ${label}`;
+  const what = fabrics.length === 1 ? fabrics[0].code ?? fabrics[0].name ?? 'fabric' : `${fabrics.length} fabrics`;
+  const subject = `${LEAD_REQUESTS[lead.request]} request – ${what}`;
   return `mailto:${to.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }

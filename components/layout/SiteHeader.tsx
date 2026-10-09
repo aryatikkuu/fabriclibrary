@@ -5,9 +5,10 @@ import { roleCan } from '@/lib/config/roles.config';
 import { primaryNav, signInNav, signOutNav, type NavItem } from '@/lib/config/nav.config';
 import { NavLink } from './NavLink';
 import { MobileNav } from './MobileNav';
+import { CartLink } from '@/components/cart/CartLink';
 
 /**
- * Archive masthead: wordmark, tracked-mono nav, selvedge hover marks.
+ * Archive masthead: wordmark, tracked-mono nav, the cart, selvedge hover marks.
  *
  * The visible link list is resolved here, on the server, from the role map —
  * the mobile drawer receives the finished list, never the profile itself.
@@ -31,14 +32,17 @@ export async function SiteHeader() {
           <span className="t-label truncate">{appConfig.brand.product}</span>
         </Link>
 
-        {/* Desktop: inline bar. Hidden below md, where MobileNav takes over. */}
-        <nav className="hidden items-center gap-7 font-mono text-[10.5px] uppercase tracking-label text-graphite md:flex">
-          {items.map((item) => (
-            <NavLink key={item.href} item={item} variant="bar" />
-          ))}
-        </nav>
-
-        <MobileNav items={items} />
+        <div className="flex shrink-0 items-center gap-5 md:gap-7">
+          {/* Desktop: inline bar. Hidden below md, where MobileNav takes over. */}
+          <nav className="hidden items-center gap-7 font-mono text-[10.5px] uppercase tracking-label text-graphite md:flex">
+            {items.map((item) => (
+              <NavLink key={item.href} item={item} variant="bar" />
+            ))}
+          </nav>
+          {/* Every size: the cart stays beside the menu on phones. */}
+          <CartLink />
+          <MobileNav items={items} />
+        </div>
       </div>
     </header>
   );

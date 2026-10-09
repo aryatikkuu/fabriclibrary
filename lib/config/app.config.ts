@@ -11,8 +11,8 @@ export const appConfig = {
   theme: process.env.NEXT_PUBLIC_THEME ?? 'ivory',
   tagline: 'Fabrics from our partner mills — find one by photo, code or colour, and request swatches or prices.',
   /**
-   * TMS contact emails: listed in the footer, and every "Request swatches /
-   * price" email is addressed to all of them.
+   * TMS contact emails: listed in the footer, and every swatch / price
+   * request from the cart is addressed to all of them.
    */
   contact: {
     emails: ['pashan@treta-marketing.com', 'agentic.ai@treta-marketing.com'],
@@ -23,13 +23,15 @@ export const appConfig = {
     bucket: process.env.STORAGE_BUCKET_NAME ?? 'textile-library',
   },
   /**
-   * "Request swatches / price" (components/fabrics/RequestSwatches.tsx):
-   * the buyer's email app opens a pre-filled draft to contact.emails, and the
-   * request is also saved as a lead (analytics page).
+   * The cart (components/cart): "Request swatches / price" opens the buyer's
+   * email app with a pre-filled draft to contact.emails, and saves one lead
+   * per fabric (analytics page).
    */
   leads: {
-    /** Requests one visitor can save per rolling 24 hours (spam guard). */
-    perVisitorPerDay: 10,
+    /** Most fabrics one cart (so one request) can hold. Keeps the email draft short enough to open. */
+    maxCart: 20,
+    /** Fabrics one visitor can request per rolling 24 hours (spam guard). */
+    perVisitorPerDay: 60,
   },
   pagination: {
     defaultPageSize: 24,
