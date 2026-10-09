@@ -129,7 +129,7 @@ review. Fabrics added this way still need **steps 3–5** to appear in photo sea
 add a photo to Storage; attach it to a fabric and run steps 3–5 for it to be searchable.
 
 
-**Photo search** (Search tab, open to everyone): a photo and/or a note ("for summer shirts") is turned into the same tags by one AI call (`app/api/search/look`, ~0.14¢), and the database ranks the library against them plus the description embedding (`match_fabrics_by_look`, migrations 0006/0008). Daily limits per visitor, per signed-in user and for all non-admins together are enforced in the database (`look_searches`, migration 0009); admins are unlimited. Tag lists, ranking weights and limits live in `lib/config/visual-tags.config.ts`.
+**Photo search** (Search tab, open to everyone): a photo and/or a note ("for summer shirts") is turned into the same tags by one AI call (`app/api/search/look`, ~0.14¢; the same call also copies the fabric code if the photo shows a readable label, and when that code exists in the library the search goes by the code instead — no extra call), and the database ranks the library against them plus the description embedding (`match_fabrics_by_look`, migrations 0006/0008). Daily limits per visitor, per signed-in user and for all non-admins together are enforced in the database (`look_searches`, migration 0009); admins are unlimited. Tag lists, ranking weights and limits live in `lib/config/visual-tags.config.ts`.
 
 ## Documentation
 

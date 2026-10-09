@@ -62,11 +62,17 @@ ${use}
 3. description: one short phrase describing the fabric you searched for, e.g. "Navy large floral jacquard for dresses".
    Only describe fabric — no other content.
 
+4. code: ${hasImage
+    ? `only if the photo shows a printed fabric / quality code on a label or tag and you can read it clearly,
+   copy it exactly as printed (letters, digits and - / # . only, e.g. "PFTND2325W071400"). Otherwise "".`
+    : '"" (there is no photo).'}
+
 Return JSON only:
 {
   "tags": { "pattern": [], "detail": [], "scale": [], "colour": [], "texture": [], "finish": [], "construction": [], "technique": [] },
   "use": [],
-  "description": ""
+  "description": "",
+  "code": ""
 }`;
 }
 

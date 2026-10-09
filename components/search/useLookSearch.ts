@@ -32,7 +32,8 @@ let handoff: { photo: Blob | null; note: string } | null = null;
  * Photo search behaviour shared by every photo-search layout (the search
  * bar's panel, the homepage card): pick / drop / paste a photo, an optional
  * note, and submit — one API call turns them into tags, which go into the URL
- * (?look=…&lookId=…) so the search page ranks the library from there.
+ * (?look=…&lookId=…) so the search page ranks the library from there. If the
+ * photo shows a label with a code the library has, it searches that code (?q=…).
  *
  * `pasteActive`: listen for pasted photos only while the layout is showing.
  * `takeHandoff`: start with the photo and note the homepage card passed on.
@@ -83,13 +84,20 @@ export function useLookSearch({ pasteActive = true, takeHandoff = false, onDone 
       const res = await fetch('/api/search/look', { method: 'POST', body: form });
       const body = await res.json();
       if (!res.ok) throw new Error(body?.error?.message ?? 'Search failed');
-      if (!body.look?.length) throw new Error('Could not recognise a fabric — try a closer photo.');
+      if (!body.look?.length && !body.code) throw new Error('Could not recognise a fabric — try a closer photo.');
 
       const params = new URLSearchParams(searchParams.toString());
-      params.set('look', formatLook(body.look));
-      if (body.lookId) params.set('lookId', body.lookId);
-      else params.delete('lookId');
-      params.delete('q');
+      if (body.code) {
+        // The photo's label named a fabric we have: search by its code.
+        params.set('q', body.code);
+        params.delete('look');
+        params.delete('lookId');
+      } else {
+        params.set('look', formatLook(body.look));
+        if (body.lookId) params.set('lookId', body.lookId);
+        else params.delete('lookId');
+        params.delete('q');
+      }
       params.delete('page');
       params.delete('photo');
       router.push(`/search?${params.toString()}`);

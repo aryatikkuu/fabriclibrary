@@ -19,8 +19,10 @@ let useTagCache: { tags: string[]; at: number } | null = null;
  * POST /api/search/look — open to everyone, within daily limits (each call
  * costs ~0.14¢; limits in lookSearch.limits, enforced by claim_look_search).
  * Multipart fields: image (optional), note (optional, "for summer shirts").
- * Returns { look, description, lookId }; the search page ranks fabrics from
- * `look` plus the description embedding stored under `lookId`.
+ * Returns { look, description, lookId, code }; the search page ranks fabrics from
+ * `look` plus the description embedding stored under `lookId`. `code` is set only
+ * when the photo's label shows a fabric code that exists in the library — the
+ * client then searches by that code instead (same AI call, no extra cost).
  * The photo is only forwarded to OpenAI — never stored.
  */
 export async function POST(request: NextRequest) {
@@ -40,14 +42,16 @@ export async function POST(request: NextRequest) {
     // (bursts, per visitor/user, or all visitors together — see claim_look_search).
     const lookId = await claimLookSearch(request, await getCurrentProfile());
 
+    const services = buildServices(await createClient());
     if (!useTagCache || Date.now() - useTagCache.at > 3_600_000) {
-      const { repositories } = buildServices(await createClient());
-      useTagCache = { tags: await repositories.fabricRepository.popularUseTags(), at: Date.now() };
+      useTagCache = { tags: await services.repositories.fabricRepository.popularUseTags(), at: Date.now() };
     }
 
-    const { look, description } = await readLook({ imageDataUrl, note, useTags: useTagCache.tags });
+    const { look, description, code } = await readLook({ imageDataUrl, note, useTags: useTagCache.tags });
     await saveLookResult(lookId, { look, description, embedding: await embedLookDescription(description) });
-    return NextResponse.json({ look, description, lookId });
+    // The label's code only counts if a fabric the visitor can see has it.
+    const found = code && (await services.fabricService.search({ q: code, pageSize: 1 })).total > 0 ? code : null;
+    return NextResponse.json({ look, description, lookId, code: found });
   } catch (error) {
     return handleApiError(error);
   }
