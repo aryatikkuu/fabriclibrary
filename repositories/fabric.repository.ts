@@ -17,10 +17,18 @@ import { showcase } from '@/lib/config/app.config';
  */
 export const FABRIC_COLUMNS =
   'id, mill_id, fabric_code, fabric_name, fabric_type, composition, gsm, width, color, color_family, season, ' +
-  'description, ai_description, suggested_use, extraction_confidence, review_status, is_complete, ' +
+  'description, ai_description, suggested_use, extraction_confidence, review_status, is_complete, collection, ' +
   'created_by, created_at, updated_at';
 const FABRIC_LIST = `${FABRIC_COLUMNS}, mill:mills(id, name, slug), images:fabric_images(*)`;
 const FABRIC_WITH_RELATIONS = `${FABRIC_LIST}, tags:fabric_tags(*)`;
+
+export interface CollectionSummary {
+  /** Swatches the caller can see (visitors: approved; staff: all but rejected). */
+  total: number;
+  pending: number;
+  names: string[];
+  colorFamilies: string[];
+}
 
 /** All fabric table access goes through this repository. */
 export class FabricRepository {
@@ -75,11 +83,14 @@ export class FabricRepository {
     }
     if (params.millSlug) query = query.eq('mill.slug', params.millSlug);
     if (params.fabricType) query = query.ilike('fabric_type', params.fabricType);
+    if (params.fabricName) query = query.eq('fabric_name', params.fabricName);
     if (params.colorFamily) query = query.ilike('color_family', params.colorFamily);
     if (params.composition) query = query.ilike('composition', `%${params.composition}%`);
     if (params.gsmMin != null) query = query.gte('gsm', params.gsmMin);
     if (params.gsmMax != null) query = query.lte('gsm', params.gsmMax);
     if (params.reviewStatus) query = query.eq('review_status', params.reviewStatus);
+    // Swatch-book colours belong on their collection page, not among the qualities.
+    query = params.collection ? query.eq('collection', params.collection) : query.is('collection', null);
 
     switch (params.sort) {
       case 'gsm_asc': query = query.order('gsm', { ascending: true, nullsFirst: false }); break;
@@ -142,8 +153,8 @@ export class FabricRepository {
   }
 
   /**
-   * Home page candidates: complete, fully described fabrics the AI read with
-   * high confidence (rules in appConfig showcase), best first. `!inner`
+   * Home page candidates: complete, fully described fabrics (not swatch-book
+   * colours) the AI read with high confidence (rules in appConfig showcase), best first. `!inner`
    * keeps only fabrics with a photo — the filter matters for staff, who can
    * otherwise see incomplete records.
    */
@@ -153,6 +164,7 @@ export class FabricRepository {
       .select(`${FABRIC_COLUMNS}, mill:mills(id, name, slug), images:fabric_images!inner(*)`)
       .eq('review_status', 'approved')
       .eq('is_complete', true)
+      .is('collection', null)
       .gte('extraction_confidence', showcase.minConfidence);
     // Filled in means not null and not blank (some reads saved '').
     for (const column of showcase.requiredFields) query = query.not(column, 'is', null).neq(column, '');
@@ -189,18 +201,53 @@ export class FabricRepository {
     return data as Fabric;
   }
 
+  /**
+   * What a collection page needs besides the swatches: how many the caller
+   * can see, how many await review, and the names (blends) and colour
+   * families present, for the filter chips. One small query (a book is a few
+   * hundred rows).
+   */
+  async collectionSummary(slug: string): Promise<CollectionSummary> {
+    const { data, error } = await this.db
+      .from('fabrics')
+      .select('fabric_name, color_family, review_status')
+      .eq('collection', slug)
+      .neq('review_status', 'rejected');
+    if (error) throw error;
+    const rows = data ?? [];
+    const distinct = (values: (string | null)[]) => [...new Set(values.filter((v): v is string => !!v?.trim()))].sort();
+    return {
+      total: rows.length,
+      pending: rows.filter((r) => r.review_status === 'needs_review').length,
+      names: distinct(rows.map((r) => r.fabric_name)),
+      colorFamilies: distinct(rows.map((r) => r.color_family)),
+    };
+  }
+
+  /** Approve every pending swatch of a collection at once; returns how many changed. */
+  async approveCollection(slug: string): Promise<number> {
+    const { data, error } = await this.db
+      .from('fabrics')
+      .update({ review_status: 'approved' })
+      .eq('collection', slug)
+      .eq('review_status', 'needs_review')
+      .select('id');
+    if (error) throw error;
+    return data?.length ?? 0;
+  }
+
   async delete(id: string): Promise<void> {
     const { error } = await this.db.from('fabrics').delete().eq('id', id);
     if (error) throw error;
   }
 
-  /** Candidate pool for similarity scoring: same type OR overlapping GSM window. */
+  /** Candidate pool for similarity scoring: same type OR overlapping GSM window; swatch-book colours left out. */
   async findSimilarityCandidates(fabric: Fabric, limit = 200): Promise<Fabric[]> {
     const filters: string[] = [];
     if (fabric.fabric_type) filters.push(`fabric_type.ilike.${fabric.fabric_type}`);
     if (fabric.gsm != null) filters.push(`and(gsm.gte.${fabric.gsm - 60},gsm.lte.${fabric.gsm + 60})`);
 
-    let query = this.db.from('fabrics').select('*').neq('id', fabric.id).limit(limit);
+    let query = this.db.from('fabrics').select('*').neq('id', fabric.id).is('collection', null).limit(limit);
     if (filters.length > 0) query = query.or(filters.join(','));
 
     const { data, error } = await query;

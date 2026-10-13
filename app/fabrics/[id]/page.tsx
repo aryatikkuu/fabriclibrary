@@ -1,9 +1,11 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { buildServices } from '@/lib/container';
 import { getCurrentProfile } from '@/lib/api-helpers';
 import { roleCan } from '@/lib/config/roles.config';
+import { findCollection } from '@/lib/config/collections.config';
 import { NotFoundError } from '@/lib/errors';
 import { formatDate } from '@/utils/format';
 import { recordFabricView } from '@/features/analytics/fabric-views';
@@ -38,6 +40,7 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
     recordFabricView(fabric.id, isStaff),
   ]);
 
+  const collection = fabric.collection ? findCollection(fabric.collection) : undefined;
   const primaryImage = fabric.images?.find((image) => image.is_primary) ?? fabric.images?.[0];
   const galleryImages = (fabric.images ?? []).filter((image) => !image.is_primary);
 
@@ -73,8 +76,8 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
               {fabric.fabric_code ?? "No code"}
             </span>
             {isStaff && <StatusBadge status={fabric.review_status} />}
-            {isStaff && !(fabric.is_complete && fabric.images.length > 0) && (
-              <span className="t-label text-thread" title="Needs a code, composition, GSM and a photo">
+            {isStaff && !((fabric.is_complete || collection) && fabric.images.length > 0) && (
+              <span className="t-label text-thread" title="Needs a code, composition, GSM (not for swatch-book colours) and a photo">
                 Hidden from public
               </span>
             )}
@@ -86,6 +89,11 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
           <h1 className="mt-3 display-page">
             {fabric.fabric_name?.trim() || 'Unnamed quality'}
           </h1>
+          {collection && (
+            <Link href={`/collections/${collection.slug}`} className="t-label mt-4 inline-block hover:text-ink">
+              A colour from {collection.name} · see all colours
+            </Link>
+          )}
 
           <AddToCart
             fabric={{

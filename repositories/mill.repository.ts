@@ -17,12 +17,14 @@ export class MillRepository {
 
   /**
    * Active mills with how many fabrics the caller can see in each, in one
-   * query (PostgREST aggregate; fabrics RLS applies to the count).
+   * query (PostgREST aggregate; fabrics RLS applies to the count). Swatch-book
+   * colours aren't counted — they are shades of a few qualities, not fabrics.
    */
   async findAllActiveWithCounts(): Promise<(Mill & { fabricCount: number })[]> {
     const { data, error } = await this.db
       .from('mills')
       .select('*, fabrics(count)')
+      .is('fabrics.collection', null)
       .eq('is_active', true)
       .order('name');
     if (error) throw error;

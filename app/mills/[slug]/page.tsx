@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
@@ -9,6 +10,8 @@ import { PremiumPageHeader } from '@/components/ui/PremiumPageHeader';
 import { FabricGrid } from '@/components/fabrics/FabricGrid';
 import { FabricFilters } from '@/components/search/FabricFilters';
 import { Pagination } from '@/components/ui/Pagination';
+import { Arrow } from '@/components/ui/Arrow';
+import { collectionsConfig } from '@/lib/config/collections.config';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +32,7 @@ export default async function MillPage({
     throw error;
   }
 
+  const collections = collectionsConfig.filter((c) => c.millSlug === mill.slug);
   const parsed = parseSearchPageParams(searchParams);
   const fabrics = await services.fabricService.searchByMill(params.slug, {
     ...parsed,
@@ -47,6 +51,17 @@ export default async function MillPage({
           </span>
         }
       />
+
+      {collections.length > 0 && (
+        <div className="mt-8 flex flex-wrap items-baseline gap-x-6 gap-y-2">
+          <span className="field-label">Swatch books</span>
+          {collections.map((c) => (
+            <Link key={c.slug} href={`/collections/${c.slug}`} className="t-label hover:text-ink">
+              {c.name} <Arrow />
+            </Link>
+          ))}
+        </div>
+      )}
 
       <div className="mt-10">
         <Suspense>

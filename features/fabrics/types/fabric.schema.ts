@@ -26,6 +26,7 @@ export const fabricSearchSchema = z.object({
   q: z.string().max(200).optional(),
   millSlug: z.string().max(100).optional(),
   fabricType: z.string().max(100).optional(),
+  fabricName: z.string().max(100).optional(),
   colorFamily: z.string().max(50).optional(),
   composition: z.string().max(200).optional(),
   gsmMin: z.coerce.number().int().min(0).optional(),

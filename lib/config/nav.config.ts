@@ -20,6 +20,7 @@ export interface NavItem {
 
 export const primaryNav: readonly NavItem[] = [
   { href: '/fabrics', label: 'Fabrics' },
+  { href: '/collections', label: 'Collections' },
   { href: '/search', label: 'Search' },
   { href: '/review', label: 'Review', permission: 'review.read', accent: true },
   { href: '/analytics', label: 'Analytics', permission: 'analytics.read', accent: true },

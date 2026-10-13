@@ -22,6 +22,8 @@ export interface Fabric {
   review_status: ReviewStatus;
   /** Has a code, composition and GSM (generated column, migration 0012). Visitors also need a photo to see it. */
   is_complete: boolean;
+  /** Swatch-book slug (lib/config/collections.config.ts) — such fabrics show on that collection's page, not in the archive. */
+  collection: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -77,11 +79,15 @@ export interface FabricSearchParams {
   q?: string;
   millSlug?: string;
   fabricType?: string;
+  /** Exact fabric name — the blend chips on a collection page. */
+  fabricName?: string;
   colorFamily?: string;
   composition?: string;
   gsmMin?: number;
   gsmMax?: number;
   reviewStatus?: ReviewStatus;
+  /** Only this swatch book's colours. Without it, searches leave every collection out. */
+  collection?: string;
   sort?: 'newest' | 'gsm_asc' | 'gsm_desc' | 'code';
   /** Photo search tags ("pattern:floral", "use:shirts"); when set, results are ranked by look and q/sort are ignored. */
   look?: string[];

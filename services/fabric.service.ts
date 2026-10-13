@@ -37,6 +37,11 @@ export class FabricService {
     return this.fabrics.search({ ...params, millSlug });
   }
 
+  /** Swatch counts and filter options for a collection page. */
+  collectionSummary(slug: string) {
+    return this.fabrics.collectionSummary(slug);
+  }
+
   /**
    * Home page picks from the best-described fabrics: the newest few as
    * "recent", then `featured` dealt out one mill at a time (best first

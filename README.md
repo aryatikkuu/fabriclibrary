@@ -111,6 +111,13 @@ site), so the real mill is never shown. Check the saved names and descriptions d
 - `--save` writes only rows it hasn't saved before. `--save --all` re-applies the whole report over later fixes
   (e.g. the `detail` tags and plain-fabric corrections) — only use it deliberately.
 
+**Swatch books** (a mill's colour card: one quality in hundreds of colours, many swatches per page) are
+*collections*, not fabrics. Cut each page into one photo per swatch, label included, and run the steps
+above on that folder. Check the codes against the book's running numbers, then add the book to
+`lib/config/collections.config.ts` and set `fabrics.collection` to its slug on those swatches. Collection
+swatches show only on `/collections/<slug>`, not in the archive, mill counts or photo search. They don't need a
+GSM to go public (books rarely print one), and staff approve a whole book from its page.
+
 **Automated imports (n8n).** The workflow in `n8n/workflows/` does step 2 per photo through the API:
 
 ```

@@ -35,6 +35,23 @@ export class ReviewService {
     return fabric;
   }
 
+  /**
+   * A swatch book is checked as a whole (codes against the book's running
+   * numbers, compositions from its row headings), so its colours are approved
+   * together — one audit entry instead of hundreds of queue clicks.
+   */
+  async approveCollection(slug: string, userId: string): Promise<number> {
+    const approved = await this.fabrics.approveCollection(slug);
+    await this.audit.record({
+      user_id: userId,
+      action: 'review.approve_collection',
+      entity_type: 'collection',
+      entity_id: null,
+      after_data: { collection: slug, approved },
+    });
+    return approved;
+  }
+
   async reject(fabricId: string, userId: string): Promise<Fabric> {
     const before = await this.fabrics.findById(fabricId);
     const fabric = await this.fabrics.update(fabricId, { review_status: 'rejected' });
