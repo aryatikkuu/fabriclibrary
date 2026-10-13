@@ -23,7 +23,7 @@ export const collectionsConfig: readonly CollectionConfig[] = [
   },
   {
     slug: 'masood-blend-collection',
-    name: 'Blend Collection',
+    name: 'Masood Blend Collection (Knits)',
     millSlug: 'masood-textile-mills',
     description:
       'Heathered knits in fourteen blends — PC/CVC, viscose, modal, Coolmax, bamboo, Tencel, Thermolite, silk and acrylic with cotton, tri blend, polyester, viscose and linen/polyester.',
