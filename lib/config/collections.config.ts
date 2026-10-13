@@ -16,7 +16,7 @@ export interface CollectionConfig {
 export const collectionsConfig: readonly CollectionConfig[] = [
   {
     slug: 'masood-cotton-melange',
-    name: '100% Cotton Melange',
+    name: 'Masood Melange Collection (Knits)',
     millSlug: 'masood-textile-mills',
     description:
       'Vol. 05 colour card — melange knits in 100% cotton, from light heathers to deep darks across greys, browns, yellows, greens, blues, reds and purples.',
