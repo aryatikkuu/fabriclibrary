@@ -62,7 +62,10 @@ export class FabricRepository {
 
     let query = this.db
       .from('fabrics')
-      .select(FABRIC_LIST + ', mills!inner(slug)', { count: 'exact' });
+      // The mill is embedded once, as an inner join, so filtering on its slug
+      // drops other mills' fabrics. (A second plain `mills` embed made the filter
+      // apply to that copy only, and every mill page listed every fabric.)
+      .select(`${FABRIC_COLUMNS}, mill:mills!inner(id, name, slug), images:fabric_images(*)`, { count: 'exact' });
 
     if (params.q) {
       const text = params.q.trim();
@@ -70,7 +73,7 @@ export class FabricRepository {
         `fabric_code.ilike.%${text}%,fabric_name.ilike.%${text}%,composition.ilike.%${text}%,fabric_type.ilike.%${text}%,color.ilike.%${text}%,description.ilike.%${text}%,suggested_use.ilike.%${text}%`,
       );
     }
-    if (params.millSlug) query = query.eq('mills.slug', params.millSlug);
+    if (params.millSlug) query = query.eq('mill.slug', params.millSlug);
     if (params.fabricType) query = query.ilike('fabric_type', params.fabricType);
     if (params.colorFamily) query = query.ilike('color_family', params.colorFamily);
     if (params.composition) query = query.ilike('composition', `%${params.composition}%`);
