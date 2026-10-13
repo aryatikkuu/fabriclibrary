@@ -10,7 +10,7 @@ import { CollectionCard } from '@/components/collections/CollectionCard';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = { title: 'Collections' };
+export const metadata = { title: 'Masood Melange Collection (Knits)' };
 
 export default async function CollectionsPage() {
   const services = buildServices(await createClient());
@@ -42,7 +42,7 @@ export default async function CollectionsPage() {
     <EditorialLayout>
       <PremiumPageHeader
         eyebrow="Swatch books"
-        title="Collections"
+        title="Masood Melange Collection (Knits)"
         description="A mill's colour cards — one quality in many shades. Pick a colour and request it like any fabric."
       />
 

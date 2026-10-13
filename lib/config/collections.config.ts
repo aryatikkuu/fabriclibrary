@@ -16,14 +16,14 @@ export interface CollectionConfig {
 export const collectionsConfig: readonly CollectionConfig[] = [
   {
     slug: 'masood-cotton-melange',
-    name: 'Masood Melange Collection (Knits)',
+    name: '100% Cotton Melange',
     millSlug: 'masood-textile-mills',
     description:
       'Vol. 05 colour card — melange knits in 100% cotton, from light heathers to deep darks across greys, browns, yellows, greens, blues, reds and purples.',
   },
   {
     slug: 'masood-blend-collection',
-    name: 'Masood Blend Collection (Knits)',
+    name: 'Blend Collection',
     millSlug: 'masood-textile-mills',
     description:
       'Heathered knits in fourteen blends — PC/CVC, viscose, modal, Coolmax, bamboo, Tencel, Thermolite, silk and acrylic with cotton, tri blend, polyester, viscose and linen/polyester.',
