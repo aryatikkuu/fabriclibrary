@@ -54,7 +54,7 @@ export default async function MillPage({
 
       {collections.length > 0 && (
         <div className="mt-8 flex flex-wrap items-baseline gap-x-6 gap-y-2">
-          <span className="field-label">Swatch books</span>
+          <span className="field-label">Collections</span>
           {collections.map((c) => (
             <Link key={c.slug} href={`/collections/${c.slug}`} className="t-label hover:text-ink">
               {c.name} <Arrow />

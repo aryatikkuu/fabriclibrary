@@ -91,7 +91,7 @@ export default async function FabricDetailPage({ params }: { params: { id: strin
           </h1>
           {collection && (
             <Link href={`/collections/${collection.slug}`} className="t-label mt-4 inline-block hover:text-ink">
-              A colour from {collection.name} · see all colours
+              A {collection.item.one} from {collection.name} · see all {collection.item.many}
             </Link>
           )}
 

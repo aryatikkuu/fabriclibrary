@@ -5,7 +5,7 @@ import type { FabricWithRelations } from '@/types/fabric';
 import { TechnicalLabel } from '@/components/ui/TechnicalLabel';
 import { Arrow } from '@/components/ui/Arrow';
 
-/** Collections index card: a strip of the book's colours, then its label. */
+/** Collections index card: a strip of the collection's colours, then its label. */
 export function CollectionCard({
   collection, millName, count, preview,
 }: {
@@ -37,7 +37,7 @@ export function CollectionCard({
           <p className="mt-3 text-sm leading-relaxed text-graphite">{collection.description}</p>
         </div>
         <p className="t-label mt-10 group-hover:text-ink">
-          {count} {count === 1 ? 'colour' : 'colours'} <Arrow />
+          {count} {count === 1 ? collection.item.one : collection.item.many} <Arrow />
         </p>
       </div>
     </Link>

@@ -20,7 +20,7 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
   return { title: findCollection(params.slug)?.name ?? 'Collection' };
 }
 
-/** One swatch book: its colours, filterable by blend and colour family. */
+/** One collection: its entries, filterable by fabric name and colour family. */
 export default async function CollectionPage({
   params,
   searchParams,
@@ -42,7 +42,7 @@ export default async function CollectionPage({
     services.fabricService.collectionSummary(collection.slug),
     services.fabricService.search({
       collection: collection.slug, fabricName, colorFamily, page, pageSize: 48, sort: 'code',
-      // Staff also see colours still waiting for review.
+      // Staff also see entries still waiting for review.
       reviewStatus: isStaff ? undefined : 'approved',
     }),
   ]);
@@ -57,7 +57,7 @@ export default async function CollectionPage({
         description={collection.description}
         aside={
           <span className="font-mono text-[11px] uppercase tracking-label text-stone">
-            {summary.total} {summary.total === 1 ? 'colour' : 'colours'}
+            {summary.total} {summary.total === 1 ? collection.item.one : collection.item.many}
           </span>
         }
       />
@@ -71,13 +71,13 @@ export default async function CollectionPage({
 
       <div className="mt-10 space-y-4 border-y border-seam py-6">
         {summary.names.length > 1 && (
-          <FilterChips label="Blend" param="fabricName" options={summary.names} current={fabricName} basePath={basePath} query={query} />
+          <FilterChips label={collection.nameFilter} param="fabricName" options={summary.names} current={fabricName} basePath={basePath} query={query} />
         )}
         <FilterChips label="Colour" param="colorFamily" options={summary.colorFamilies} current={colorFamily} basePath={basePath} query={query} />
       </div>
 
       <div className="mt-10">
-        <FabricGrid fabrics={swatches.items} showStatus={isStaff} emptyHint="No colours match these filters." />
+        <FabricGrid fabrics={swatches.items} showStatus={isStaff} emptyHint={`No ${collection.item.many} match these filters.`} />
       </div>
 
       <Suspense>

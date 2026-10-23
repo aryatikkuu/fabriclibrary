@@ -43,7 +43,7 @@ export default async function CollectionsPage() {
       <PremiumPageHeader
         eyebrow="Swatch books"
         title="Masood Melange Collection (Knits)"
-        description="A mill's colour cards — one quality in many shades. Pick a colour and request it like any fabric."
+        description="Mill swatch books and hanger sets, each on its own page. Pick one and request it like any fabric."
       />
 
       <div className="mt-12">
